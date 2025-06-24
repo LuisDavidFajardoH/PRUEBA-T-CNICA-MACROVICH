@@ -23,7 +23,7 @@ class AIService
         $this->weatherService = $weatherService;
         $this->apiKey = config('services.gemini.api_key');
         $this->model = config('services.gemini.model', 'gemini-1.5-flash');
-        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1/models';
+        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
         
         if (empty($this->apiKey)) {
             throw new Exception('Gemini API key is not configured. Please set GEMINI_API_KEY in your .env file.');
@@ -59,7 +59,7 @@ class AIService
             if ($includeWeatherFunction) {
                 $payload['tools'] = [
                     [
-                        'function_declarations' => [
+                        'functionDeclarations' => [
                             [
                                 'name' => 'get_weather_data',
                                 'description' => 'Obtener datos meteorológicos actuales y de pronóstico para una ubicación específica',
@@ -646,197 +646,98 @@ SEGURIDAD:
     }
 
     /**
-     * Generate weather response using real weather data without function calling
+     * Generate weather response using real weather data with AI interpretation
      */
     public function generateWeatherResponseSimple(string $userMessage): string
     {
         try {
-            // Extract location from user message (simple pattern matching)
-            $location = $this->extractLocationFromMessage($userMessage);
+            // First, let Gemini AI analyze the user's message to extract location and preferences
+            $analysisPrompt = "Analiza este mensaje del usuario sobre el clima y extrae la información clave:\n\n" .
+                             "Mensaje del usuario: \"{$userMessage}\"\n\n" .
+                             "Por favor, identifica y extrae:\n" .
+                             "1. UBICACIÓN: La ciudad, país o lugar específico mencionado\n" .
+                             "2. TIPO_CONSULTA: 'actual' para clima actual, o 'pronóstico' para pronósticos futuros\n" .
+                             "3. DÍAS_PRONÓSTICO: Si es pronóstico, cuántos días (1-7, default 3)\n" .
+                             "4. CONTEXTO_TEMPORAL: Si menciona 'mañana', 'esta semana', 'próximos días', etc.\n\n" .
+                             "Responde SOLO en este formato JSON exacto:\n" .
+                             "{\n" .
+                             "  \"ubicacion\": \"ciudad_extraída\",\n" .
+                             "  \"tipo_consulta\": \"actual|pronóstico\",\n" .
+                             "  \"dias_pronostico\": número_de_días,\n" .
+                             "  \"contexto_temporal\": \"descripción_temporal\"\n" .
+                             "}\n\n" .
+                             "Si no puedes identificar la ubicación claramente, usa \"ubicacion\": null";
+
+            $analysisResponse = $this->generateResponse($analysisPrompt, [], false);
             
-            if (!$location) {
+            if (!$analysisResponse['success']) {
+                return "Lo siento, tuve problemas para procesar tu consulta. ¿Puedes reformularla?";
+            }
+
+            // Parse the AI analysis
+            $analysisContent = trim($analysisResponse['content']);
+            
+            // Extract JSON from the response
+            if (preg_match('/\{[^}]+\}/', $analysisContent, $matches)) {
+                $jsonStr = $matches[0];
+                $analysis = json_decode($jsonStr, true);
+                
+                if (!$analysis) {
+                    return "Para poder ayudarte con el clima, ¿podrías decirme de qué ciudad quieres saber el clima?";
+                }
+                
+                $location = $analysis['ubicacion'] ?? null;
+                $tipoConsulta = $analysis['tipo_consulta'] ?? 'actual';
+                $diasPronostico = $analysis['dias_pronostico'] ?? 3;
+                
+                if (!$location || $location === 'null') {
+                    return "Para poder ayudarte con el clima, ¿podrías decirme de qué ciudad quieres saber el clima?";
+                }
+
+                // Get weather data based on analysis
+                if ($tipoConsulta === 'pronóstico' || $tipoConsulta === 'pronostico') {
+                    $weatherResponse = $this->weatherService->getWeatherData($location, true, $diasPronostico);
+                    
+                    if (!$weatherResponse['success']) {
+                        return $weatherResponse['message'] ?? "Lo siento, no pude obtener datos del clima para {$location}. ¿Podrías verificar el nombre de la ciudad?";
+                    }
+                    
+                    $weatherData = $weatherResponse['data'];
+                    $weatherContext = $this->formatForecastDataForPrompt($weatherData, $userMessage);
+                } else {
+                    $weatherData = $this->weatherService->getCurrentWeather($location);
+                    
+                    if (!$weatherData) {
+                        return "Lo siento, no pude obtener datos del clima para {$location}. ¿Podrías verificar el nombre de la ciudad?";
+                    }
+                    
+                    $weatherContext = $this->formatWeatherDataForPrompt($weatherData);
+                }
+
+                // Generate final response with weather data
+                $finalPrompt = "Usuario pregunta: \"{$userMessage}\"\n\n" .
+                              "Datos meteorológicos reales obtenidos:\n{$weatherContext}\n\n" .
+                              "Instrucciones:\n" .
+                              "- Proporciona una respuesta natural y conversacional usando estos datos reales\n" .
+                              "- Responde específicamente a lo que el usuario preguntó\n" .
+                              "- Incluye detalles relevantes como temperatura, descripción, humedad, viento según corresponda\n" .
+                              "- Si es pronóstico, incluye la información de los días solicitados\n" .
+                              "- Usa emojis apropiados para hacer la respuesta más atractiva\n" .
+                              "- Sé amigable y útil\n" .
+                              "- Menciona la ubicación específica en tu respuesta";
+
+                $finalResponse = $this->generateResponse($finalPrompt, [], false);
+                
+                return $finalResponse['content'] ?? 'Lo siento, no pude generar una respuesta sobre el clima.';
+                
+            } else {
                 return "Para poder ayudarte con el clima, ¿podrías decirme de qué ciudad quieres saber el clima?";
             }
-
-            // Get real weather data
-            $weatherData = $this->weatherService->getCurrentWeather($location);
-            
-            if (!$weatherData) {
-                return "Lo siento, no pude obtener datos del clima para {$location}. ¿Podrías verificar el nombre de la ciudad?";
-            }
-
-            // Create a detailed prompt with the real weather data
-            $weatherContext = $this->formatWeatherDataForPrompt($weatherData);
-            
-            $prompt = "Usuario pregunta: {$userMessage}\n\n" .
-                     "Datos meteorológicos reales actuales:\n{$weatherContext}\n\n" .
-                     "Por favor, proporciona una respuesta natural y conversacional sobre el clima usando estos datos reales. " .
-                     "Incluye temperatura, descripción del clima, sensación térmica, humedad, y cualquier otro dato relevante de manera amigable.";
-
-            $response = $this->generateResponse($prompt, [], false);
-            
-            return $response['content'] ?? 'Lo siento, no pude generar una respuesta sobre el clima.';
             
         } catch (Exception $e) {
             Log::error('Weather response generation error: ' . $e->getMessage());
             return 'Lo siento, tuve un problema al obtener la información del clima. ¿Puedes intentar de nuevo?';
         }
-    }
-
-    /**
-     * Extract location from user message
-     */
-    /**
-     * Extract location from user message using flexible pattern matching
-     */
-    private function extractLocationFromMessage(string $message): ?string
-    {
-        // Clean and normalize the message
-        $normalizedMessage = trim($message);
-        $lowerMessage = strtolower($normalizedMessage);
-        
-        // Pattern 1: Direct location extraction with common weather-related phrases
-        $weatherPatterns = [
-            // Spanish patterns
-            '/(?:clima|tiempo|temperatura|pronóstico|pronostico)\s+(?:en|de|para)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            '/(?:cómo|como)\s+(?:está|esta)\s+(?:el\s+)?(?:clima|tiempo)\s+(?:en|de)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            '/(?:qué|que)\s+(?:tiempo|clima)\s+(?:hace|hay)\s+(?:en|de)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            '/(?:cuál|cual)\s+(?:es\s+)?(?:la\s+)?temperatura\s+(?:en|de)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            '/(?:dame|dime)\s+(?:el\s+)?(?:clima|tiempo|pronóstico|pronostico)\s+(?:de|en|para)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            
-            // English patterns
-            '/(?:weather|climate|temperature|forecast)\s+(?:in|for|at)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            '/(?:how)\s+(?:is|\'s)\s+(?:the\s+)?(?:weather|climate)\s+(?:in|at)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            '/(?:what)\s+(?:is|\'s)\s+(?:the\s+)?(?:weather|temperature)\s+(?:in|at|like\s+in)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-            
-            // Simple patterns - just the city name at the end
-            '/(?:en|in)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
-        ];
-
-        foreach ($weatherPatterns as $pattern) {
-            if (preg_match($pattern, $normalizedMessage, $matches)) {
-                $location = $this->cleanLocationString($matches[1]);
-                if ($location) {
-                    return $location;
-                }
-            }
-        }
-
-        // Pattern 2: If the message seems to be just a city name (very short message)
-        if (strlen($normalizedMessage) <= 50 && !preg_match('/\b(?:hola|hello|hi|gracias|thanks|como|how|que|what|cuando|when)\b/i', $lowerMessage)) {
-            // Remove common weather words and see if we have a location left
-            $cleaned = preg_replace('/\b(?:clima|tiempo|weather|temperature|pronóstico|pronostico|forecast)\b/i', '', $normalizedMessage);
-            $cleaned = $this->cleanLocationString($cleaned);
-            
-            if ($cleaned && strlen($cleaned) >= 2) {
-                return $cleaned;
-            }
-        }
-
-        // Pattern 3: Look for any capitalized words that could be city names
-        if (preg_match_all('/\b([A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]{1,}(?:\s+[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]{1,})*)\b/u', $normalizedMessage, $matches)) {
-            foreach ($matches[1] as $potential) {
-                $cleaned = $this->cleanLocationString($potential);
-                if ($cleaned && !$this->isCommonWord($cleaned)) {
-                    return $cleaned;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Clean and format location string
-     */
-    private function cleanLocationString(string $location): ?string
-    {
-        // Remove extra whitespace and punctuation
-        $location = trim($location, " \t\n\r\0\x0B.,;!?");
-        $location = preg_replace('/\s+/', ' ', $location);
-        
-        // Must be at least 2 characters
-        if (strlen($location) < 2) {
-            return null;
-        }
-        
-        // Handle common country patterns - keep the city, add country after comma
-        $countryPatterns = [
-            '/^(.+?)\s+(colombia|mexico|argentina|chile|peru|spain|france|italy|germany|uk|usa|brazil|venezuela|ecuador|bolivia|uruguay|paraguay|japan|china|india|australia|canada|russia)$/i' => '$1, $2',
-            '/^(.+?)\s+(méxico)$/i' => '$1, Mexico',
-            '/^(.+?)\s+(españa)$/i' => '$1, Spain',
-            '/^(.+?)\s+(francia)$/i' => '$1, France',
-            '/^(.+?)\s+(italia)$/i' => '$1, Italy',
-            '/^(.+?)\s+(alemania)$/i' => '$1, Germany',
-            '/^(.+?)\s+(japón)$/i' => '$1, Japan',
-            '/^(.+?)\s+(estados unidos|eeuu)$/i' => '$1, USA',
-            '/^(.+?)\s+(reino unido)$/i' => '$1, UK',
-        ];
-        
-        foreach ($countryPatterns as $pattern => $replacement) {
-            if (preg_match($pattern, $location, $matches)) {
-                $cityName = trim($matches[1]);
-                $countryName = ucfirst(strtolower(trim($matches[2])));
-                
-                // For common mappings
-                $countryMappings = [
-                    'méxico' => 'Mexico',
-                    'españa' => 'Spain',
-                    'francia' => 'France',
-                    'italia' => 'Italy',
-                    'alemania' => 'Germany',
-                    'japón' => 'Japan',
-                    'estados unidos' => 'USA',
-                    'eeuu' => 'USA',
-                    'reino unido' => 'UK'
-                ];
-                
-                if (isset($countryMappings[strtolower($countryName)])) {
-                    $countryName = $countryMappings[strtolower($countryName)];
-                }
-                
-                // Try just the city name first (often works better with weather APIs)
-                return ucwords(strtolower($cityName));
-            }
-        }
-        
-        // Remove common words that aren't locations
-        $location = preg_replace('/\b(?:el|la|los|las|de|del|en|para|con|por|the|of|in|at|for|with)\b/i', '', $location);
-        $location = trim($location);
-        
-        if (strlen($location) < 2) {
-            return null;
-        }
-        
-        // Capitalize properly
-        return ucwords(strtolower($location));
-    }
-
-    /**
-     * Check if a word is a common word that's not likely to be a location
-     */
-    private function isCommonWord(string $word): bool
-    {
-        $commonWords = [
-            // Spanish
-            'Clima', 'Tiempo', 'Temperatura', 'Pronóstico', 'Pronostico', 'Hola', 'Como', 'Cómo', 
-            'Está', 'Esta', 'Dame', 'Dime', 'Quiero', 'Saber', 'Hace', 'Hay', 'Qué', 'Que',
-            'Cuál', 'Cual', 'Hoy', 'Mañana', 'Ayer', 'Ahora', 'Gracias', 'Por', 'Favor',
-            
-            // English
-            'Weather', 'Climate', 'Temperature', 'Forecast', 'Hello', 'Hi', 'How', 'What',
-            'When', 'Where', 'Today', 'Tomorrow', 'Yesterday', 'Now', 'Thanks', 'Please',
-            
-            // Days and months that might get capitalized
-            'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
-            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
-            'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-            'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
-            'September', 'October', 'November', 'December'
-        ];
-        
-        return in_array(ucfirst(strtolower($word)), $commonWords);
     }
 
     /**
@@ -867,5 +768,99 @@ SEGURIDAD:
             $weatherData['coordinates']['latitude'],
             $weatherData['coordinates']['longitude']
         );
+    }
+
+    /**
+     * Format forecast data for prompt
+     */
+    private function formatForecastDataForPrompt(array $weatherData, string $originalMessage): string
+    {
+        $formatted = "DATOS METEOROLÓGICOS COMPLETOS:\n\n";
+        
+        // Current weather
+        if (isset($weatherData['current'])) {
+            $current = $weatherData['current'];
+            $formatted .= "=== CLIMA ACTUAL ===\n";
+            $formatted .= sprintf(
+                "Ubicación: %s\n" .
+                "Temperatura actual: %.1f°C (Sensación: %.1f°C)\n" .
+                "Descripción: %s\n" .
+                "Humedad: %d%%\n" .
+                "Viento: %.1f km/h\n" .
+                "Presión: %.1f hPa\n\n",
+                $weatherData['location'] ?? 'N/A',
+                $current['temperature'] ?? 0,
+                $current['feels_like'] ?? 0,
+                $current['description'] ?? 'N/A',
+                $current['humidity'] ?? 0,
+                $current['wind_speed'] ?? 0,
+                $current['pressure'] ?? 0
+            );
+        }
+        
+        // Daily forecast
+        if (isset($weatherData['daily']) && count($weatherData['daily']) > 0) {
+            $formatted .= "=== PRONÓSTICO DIARIO ===\n";
+            foreach ($weatherData['daily'] as $index => $day) {
+                $dayName = $this->getDayName($index);
+                $formatted .= sprintf(
+                    "%s: %s | Máx: %.1f°C | Mín: %.1f°C | Lluvia: %.1fmm\n",
+                    $dayName,
+                    $day['description'] ?? 'N/A',
+                    $day['temperature_max'] ?? 0,
+                    $day['temperature_min'] ?? 0,
+                    $day['precipitation'] ?? 0
+                );
+            }
+            $formatted .= "\n";
+        }
+        
+        // Hourly forecast for today/tomorrow if requested
+        if (isset($weatherData['hourly']) && count($weatherData['hourly']) > 0 && 
+            (strpos(strtolower($originalMessage), 'hora') !== false || 
+             strpos(strtolower($originalMessage), 'hoy') !== false ||
+             strpos(strtolower($originalMessage), 'mañana') !== false)) {
+            
+            $formatted .= "=== PRONÓSTICO POR HORAS (Próximas 12 horas) ===\n";
+            $hourlyData = array_slice($weatherData['hourly'], 0, 12);
+            foreach ($hourlyData as $hour) {
+                $formatted .= sprintf(
+                    "%s: %.1f°C | %s | Lluvia: %.1fmm\n",
+                    date('H:i', strtotime($hour['time'])),
+                    $hour['temperature'] ?? 0,
+                    $hour['description'] ?? 'N/A',
+                    $hour['precipitation'] ?? 0
+                );
+            }
+        }
+        
+        return $formatted;
+    }
+
+    /**
+     * Get day name for forecast
+     */
+    private function getDayName(int $dayIndex): string
+    {
+        $days = ['Hoy', 'Mañana', 'Pasado mañana'];
+        
+        if ($dayIndex < count($days)) {
+            return $days[$dayIndex];
+        }
+        
+        // For days beyond, calculate the actual day name
+        $futureDate = now()->addDays($dayIndex);
+        $dayNames = [
+            'Monday' => 'Lunes',
+            'Tuesday' => 'Martes', 
+            'Wednesday' => 'Miércoles',
+            'Thursday' => 'Jueves',
+            'Friday' => 'Viernes',
+            'Saturday' => 'Sábado',
+            'Sunday' => 'Domingo'
+        ];
+        
+        $englishDay = $futureDate->format('l');
+        return $dayNames[$englishDay] ?? $englishDay;
     }
 }

@@ -10,7 +10,7 @@
         <span>{{ loadingText || 'Escribiendo...' }}</span>
       </div>
       <div v-else class="message-content">
-        <p>{{ message.content }}</p>
+        <div class="message-text" v-html="formatMessage(message.content)"></div>
         <small>{{ formatTime(message.timestamp) }}</small>
       </div>
     </div>
@@ -35,6 +35,29 @@ defineProps<{
 
 const formatTime = (date: Date) => {
   return format(date, 'HH:mm')
+}
+
+const formatMessage = (content: string): string => {
+  // Convert line breaks to HTML
+  let formatted = content.replace(/\n/g, '<br>')
+  
+  // Convert emoji-rich weather content to better formatted HTML
+  // Temperature indicators
+  formatted = formatted.replace(/(\d+\.?\d*°C)/g, '<strong>$1</strong>')
+  
+  // Weather conditions with emojis
+  formatted = formatted.replace(/(🌤️|☀️|🌥️|☁️|🌧️|⛈️|🌩️|❄️|🌨️|🌦️|🌈)/g, '<span class="weather-emoji">$1</span>')
+  
+  // Percentage values (humidity, etc.)
+  formatted = formatted.replace(/(\d+%)/g, '<strong>$1</strong>')
+  
+  // Wind speed
+  formatted = formatted.replace(/(\d+\.?\d*\s*km\/h)/g, '<strong>$1</strong>')
+  
+  // Pressure values
+  formatted = formatted.replace(/(\d+\.?\d*\s*hPa)/g, '<strong>$1</strong>')
+  
+  return formatted
 }
 </script>
 
@@ -110,6 +133,20 @@ const formatTime = (date: Date) => {
 .message-content p {
   margin: 0 0 0.5rem 0;
   line-height: 1.5;
+}
+
+.message-text {
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.message-text strong {
+  font-weight: 600;
+}
+
+.weather-emoji {
+  font-size: 1.1em;
+  margin: 0 2px;
 }
 
 .message-content small {

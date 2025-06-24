@@ -18,7 +18,7 @@
       <template #header>
         <ChatHeader
           :title="chatStore.currentConversation?.title || 'Nueva conversación'"
-          subtitle="Pregúntame sobre el clima en cualquier lugar del mundo"
+          subtitle="Consulta el clima actual y pronósticos con datos meteorológicos reales"
           :isTyping="chatStore.isTyping"
           typingText="Escribiendo..."
         />
@@ -39,8 +39,8 @@
         <!-- Welcome screen -->
         <WelcomeScreen
           v-else-if="!chatStore.hasMessages"
-          title="¡Hola! Soy tu asistente meteorológico"
-          description="Puedes preguntarme sobre el clima actual, pronósticos, o cualquier información relacionada con el tiempo."
+          title="¡Hola! Soy tu asistente meteorológico inteligente"
+          description="Consulta el clima actual, pronósticos extendidos y datos meteorológicos de cualquier ciudad del mundo. Todas mis respuestas están basadas en información real y actualizada."
           avatarIcon="pi pi-cloud"
           :suggestions="welcomeSuggestions"
           @sendSuggestion="sendSampleMessage"
@@ -68,7 +68,7 @@
 
       <template #input>
         <MessageInput
-          placeholder="Pregúntame sobre el clima..."
+          placeholder="Pregúntame sobre el clima de cualquier ciudad del mundo..."
           :disabled="chatStore.isLoading"
           :loading="chatStore.isLoading"
           submitIcon="pi pi-send"
@@ -135,26 +135,26 @@ const {
     {
       id: '1',
       title: '¿Cómo está el clima en Madrid?',
-      description: 'Consulta el clima actual de Madrid',
+      description: 'Consulta el clima actual con datos reales',
       message: '¿Cómo está el clima en Madrid?'
     },
     {
       id: '2',
-      title: 'Pronóstico de Barcelona',
-      description: 'Obtén el pronóstico para Barcelona',
-      message: 'Dame el pronóstico del tiempo para Barcelona'
+      title: 'Pronóstico de 7 días para Barcelona',
+      description: 'Obtén el pronóstico extendido para Barcelona',
+      message: 'Dame el pronóstico de 7 días para Barcelona'
     },
     {
       id: '3',
-      title: 'Clima en Valencia',
-      description: 'Información meteorológica de Valencia',
-      message: '¿Qué tiempo hace en Valencia?'
+      title: 'Temperatura en París',
+      description: 'Información meteorológica actualizada de París',
+      message: '¿Cuál es la temperatura actual en París?'
     },
     {
       id: '4',
-      title: 'Temperatura actual',
-      description: 'Consulta rápida de temperatura',
-      message: '¿Cuál es la temperatura actual en Sevilla?'
+      title: 'Clima en Nueva York',
+      description: 'Consulta datos meteorológicos de cualquier ciudad del mundo',
+      message: '¿Qué tiempo hace en Nueva York?'
     }
   ])
 

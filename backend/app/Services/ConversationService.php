@@ -157,33 +157,27 @@ class ConversationService
     }
 
     /**
-     * Generate AI response using the AI service
+     * Generate AI response using the simple weather method (without function calling)
      */
     private function generateAIResponse(string $userMessage, array $context): array
     {
         try {
-            // Check if the message is weather-related
-            $weatherData = null;
-            if ($this->isWeatherQuery($userMessage)) {
-                $location = $this->extractLocationFromMessage($userMessage);
-                if ($location) {
-                    $weatherData = $this->weatherService->getCurrentWeather($location);
-                }
-            }
+            // Use the simple weather response method that works perfectly
+            $aiResponse = AI::generateWeatherResponseSimple($userMessage);
 
-            // Prepare the prompt with context and weather data
-            $prompt = $this->buildAIPrompt($userMessage, $context, $weatherData);
-            
-            // Get AI response
-            $response = AI::generateWeatherResponseSimple($userMessage);
+            // Check if it's a fallback response (no location found)
+            $isWeatherQuery = stripos($userMessage, 'clima') !== false || 
+                            stripos($userMessage, 'tiempo') !== false || 
+                            stripos($userMessage, 'temperature') !== false ||
+                            stripos($userMessage, 'weather') !== false;
 
             return [
-                'content' => $response,
+                'content' => $aiResponse,
                 'metadata' => [
-                    'weather_data_used' => !is_null($weatherData),
-                    'location' => $location ?? null,
-                    'response_tokens' => strlen($response),
-                    'generated_at' => now()->toISOString()
+                    'weather_query' => $isWeatherQuery,
+                    'generated_at' => now()->toISOString(),
+                    'method_used' => 'simple_weather_response',
+                    'has_real_weather_data' => $isWeatherQuery && !str_contains($aiResponse, 'no pude obtener')
                 ]
             ];
 
@@ -198,10 +192,28 @@ class ConversationService
                 'content' => 'Lo siento, no pude procesar tu consulta en este momento. Por favor, inténtalo de nuevo.',
                 'metadata' => [
                     'is_fallback' => true,
-                    'error' => 'AI service unavailable'
+                    'error' => $e->getMessage(),
+                    'generated_at' => now()->toISOString()
                 ]
             ];
         }
+    }
+
+    /**
+     * Format conversation context for AI service
+     */
+    private function formatContextForAI(array $context): array
+    {
+        $formattedHistory = [];
+        
+        foreach ($context as $message) {
+            $formattedHistory[] = [
+                'role' => $message['role'],
+                'content' => $message['content']
+            ];
+        }
+        
+        return $formattedHistory;
     }
 
     /**
