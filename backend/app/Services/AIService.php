@@ -80,6 +80,43 @@ class AIService
     }
 
     /**
+     * Generate a simple text response (for ConversationService compatibility)
+     */
+    public function generateTextResponse(string $userMessage): string
+    {
+        $result = $this->generateResponse($userMessage, [], false);
+        return $result['content'] ?? $this->getErrorResponse();
+    }
+
+    /**
+     * Health check method (public version)
+     */
+    public function healthCheck(): array
+    {
+        return $this->getHealthStatus();
+    }
+
+    /**
+     * Public method to get system prompt for testing
+     */
+    public function getSystemPromptForTesting(): string
+    {
+        return $this->getSystemPrompt();
+    }
+
+    /**
+     * Sanitize user prompt
+     */
+    public function sanitizePrompt(string $prompt): string
+    {
+        // Remove extra whitespace and line breaks
+        $cleaned = trim($prompt);
+        $cleaned = preg_replace('/\s+/', ' ', $cleaned);
+        
+        return $cleaned;
+    }
+
+    /**
      * Make HTTP request to Gemini API
      */
     private function makeGeminiRequest(array $payload): Response
@@ -397,5 +434,72 @@ SEGURIDAD:
                 ];
             }
         });
+    }
+
+    /**
+     * Validate AI service configuration
+     */
+    public function validateConfiguration(): array
+    {
+        return [
+            'api_key_configured' => !empty($this->apiKey) && $this->apiKey !== 'your_gemini_api_key_here',
+            'model_configured' => !empty($this->model),
+            'base_url_configured' => !empty($this->baseUrl),
+            'api_key_length' => strlen($this->apiKey ?? ''),
+            'model' => $this->model,
+            'base_url' => $this->baseUrl
+        ];
+    }
+
+    /**
+     * Get usage statistics
+     */
+    public function getUsageStats(): array
+    {
+        // In a real implementation, these would be tracked in cache/database
+        return [
+            'total_requests' => Cache::get('ai_total_requests', 0),
+            'successful_requests' => Cache::get('ai_successful_requests', 0),
+            'failed_requests' => Cache::get('ai_failed_requests', 0),
+            'average_response_time' => Cache::get('ai_avg_response_time', 0),
+            'last_request_time' => Cache::get('ai_last_request_time', null),
+        ];
+    }
+
+    /**
+     * Increment usage statistics
+     */
+    private function incrementUsageStats(bool $success, float $responseTime): void
+    {
+        Cache::increment('ai_total_requests');
+        
+        if ($success) {
+            Cache::increment('ai_successful_requests');
+        } else {
+            Cache::increment('ai_failed_requests');
+        }
+
+        // Simple moving average for response time
+        $currentAvg = Cache::get('ai_avg_response_time', 0);
+        $totalRequests = Cache::get('ai_total_requests', 1);
+        $newAvg = (($currentAvg * ($totalRequests - 1)) + $responseTime) / $totalRequests;
+        
+        Cache::put('ai_avg_response_time', $newAvg, now()->addDay());
+        Cache::put('ai_last_request_time', now()->toISOString(), now()->addDay());
+    }
+
+    /**
+     * Generate a simple response for testing (doesn't call external API)
+     */
+    public function generateTestResponse(string $prompt): string
+    {
+        $testResponses = [
+            'Hola! Soy tu asistente meteorológico de prueba.',
+            'El sistema está funcionando correctamente.',
+            'Puedo ayudarte con consultas sobre el clima.',
+            'Sistema de IA operativo y listo para responder.'
+        ];
+
+        return $testResponses[array_rand($testResponses)];
     }
 }
