@@ -686,102 +686,157 @@ SEGURIDAD:
     /**
      * Extract location from user message
      */
+    /**
+     * Extract location from user message using flexible pattern matching
+     */
     private function extractLocationFromMessage(string $message): ?string
     {
-        // Expanded list including Latin American cities
-        $cities = [
-            // Spain
-            'madrid' => 'Madrid, Spain',
-            'barcelona' => 'Barcelona, Spain', 
-            'valencia' => 'Valencia, Spain',
-            'sevilla' => 'Sevilla, Spain',
-            'bilbao' => 'Bilbao, Spain',
-            'málaga' => 'Málaga, Spain',
-            'murcia' => 'Murcia, Spain',
-            'palma' => 'Palma, Spain',
-            'las palmas' => 'Las Palmas, Spain',
-            'valladolid' => 'Valladolid, Spain',
+        // Clean and normalize the message
+        $normalizedMessage = trim($message);
+        $lowerMessage = strtolower($normalizedMessage);
+        
+        // Pattern 1: Direct location extraction with common weather-related phrases
+        $weatherPatterns = [
+            // Spanish patterns
+            '/(?:clima|tiempo|temperatura|pronóstico|pronostico)\s+(?:en|de|para)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
+            '/(?:cómo|como)\s+(?:está|esta)\s+(?:el\s+)?(?:clima|tiempo)\s+(?:en|de)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
+            '/(?:qué|que)\s+(?:tiempo|clima)\s+(?:hace|hay)\s+(?:en|de)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
+            '/(?:cuál|cual)\s+(?:es\s+)?(?:la\s+)?temperatura\s+(?:en|de)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
+            '/(?:dame|dime)\s+(?:el\s+)?(?:clima|tiempo|pronóstico|pronostico)\s+(?:de|en|para)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
             
-            // Colombia
-            'bogotá' => 'Bogotá, Colombia',
-            'bogota' => 'Bogotá, Colombia',
-            'medellín' => 'Medellín, Colombia',
-            'medellin' => 'Medellín, Colombia',
-            'cali' => 'Cali, Colombia',
-            'barranquilla' => 'Barranquilla, Colombia',
-            'cartagena' => 'Cartagena, Colombia',
+            // English patterns
+            '/(?:weather|climate|temperature|forecast)\s+(?:in|for|at)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
+            '/(?:how)\s+(?:is|\'s)\s+(?:the\s+)?(?:weather|climate)\s+(?:in|at)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
+            '/(?:what)\s+(?:is|\'s)\s+(?:the\s+)?(?:weather|temperature)\s+(?:in|at|like\s+in)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
             
-            // Mexico
-            'méxico' => 'Mexico City, Mexico',
-            'mexico' => 'Mexico City, Mexico',
-            'guadalajara' => 'Guadalajara, Mexico',
-            'monterrey' => 'Monterrey, Mexico',
-            'puebla' => 'Puebla, Mexico',
-            'tijuana' => 'Tijuana, Mexico',
-            'león' => 'León, Mexico',
-            'cancún' => 'Cancún, Mexico',
-            'cancun' => 'Cancún, Mexico',
-            
-            // Argentina
-            'buenos aires' => 'Buenos Aires, Argentina',
-            'córdoba' => 'Córdoba, Argentina',
-            'cordoba' => 'Córdoba, Argentina',
-            'rosario' => 'Rosario, Argentina',
-            'mendoza' => 'Mendoza, Argentina',
-            
-            // Chile
-            'santiago' => 'Santiago, Chile',
-            'valparaíso' => 'Valparaíso, Chile',
-            'valparaiso' => 'Valparaíso, Chile',
-            'concepción' => 'Concepción, Chile',
-            'concepcion' => 'Concepción, Chile',
-            
-            // Peru
-            'lima' => 'Lima, Peru',
-            'arequipa' => 'Arequipa, Peru',
-            'cusco' => 'Cusco, Peru',
-            'cuzco' => 'Cusco, Peru',
-            
-            // Other major cities
-            'new york' => 'New York, USA',
-            'nueva york' => 'New York, USA',
-            'london' => 'London, UK',
-            'londres' => 'London, UK',
-            'paris' => 'Paris, France',
-            'parís' => 'Paris, France',
-            'berlin' => 'Berlin, Germany',
-            'berlín' => 'Berlin, Germany',
-            'rome' => 'Rome, Italy',
-            'roma' => 'Rome, Italy',
-            'tokyo' => 'Tokyo, Japan',
-            'tokio' => 'Tokyo, Japan'
+            // Simple patterns - just the city name at the end
+            '/(?:en|in)\s+([a-záéíóúñü\s,-]+?)(?:\s*[.?!]|$)/i',
         ];
 
-        $messageLower = strtolower($message);
-        
-        // First check for known cities
-        foreach ($cities as $key => $city) {
-            if (strpos($messageLower, $key) !== false) {
-                return $city;
+        foreach ($weatherPatterns as $pattern) {
+            if (preg_match($pattern, $normalizedMessage, $matches)) {
+                $location = $this->cleanLocationString($matches[1]);
+                if ($location) {
+                    return $location;
+                }
             }
         }
 
-        // Try to extract using regex patterns for general city names with country
-        if (preg_match('/(?:en|de|clima de|tiempo en|weather in)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+(?:,\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]*)?)/ui', $message, $matches)) {
-            return trim($matches[1]);
+        // Pattern 2: If the message seems to be just a city name (very short message)
+        if (strlen($normalizedMessage) <= 50 && !preg_match('/\b(?:hola|hello|hi|gracias|thanks|como|how|que|what|cuando|when)\b/i', $lowerMessage)) {
+            // Remove common weather words and see if we have a location left
+            $cleaned = preg_replace('/\b(?:clima|tiempo|weather|temperature|pronóstico|pronostico|forecast)\b/i', '', $normalizedMessage);
+            $cleaned = $this->cleanLocationString($cleaned);
+            
+            if ($cleaned && strlen($cleaned) >= 2) {
+                return $cleaned;
+            }
         }
 
-        // Try to extract any capitalized word that could be a city name
-        if (preg_match('/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})*)\b/u', $message, $matches)) {
-            $potential = trim($matches[1]);
-            // Filter out common words that aren't cities
-            $excludeWords = ['Clima', 'Tiempo', 'Hola', 'Como', 'Está', 'Dame', 'Dime', 'Quiero', 'Saber'];
-            if (!in_array($potential, $excludeWords)) {
-                return $potential;
+        // Pattern 3: Look for any capitalized words that could be city names
+        if (preg_match_all('/\b([A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]{1,}(?:\s+[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]{1,})*)\b/u', $normalizedMessage, $matches)) {
+            foreach ($matches[1] as $potential) {
+                $cleaned = $this->cleanLocationString($potential);
+                if ($cleaned && !$this->isCommonWord($cleaned)) {
+                    return $cleaned;
+                }
             }
         }
 
         return null;
+    }
+
+    /**
+     * Clean and format location string
+     */
+    private function cleanLocationString(string $location): ?string
+    {
+        // Remove extra whitespace and punctuation
+        $location = trim($location, " \t\n\r\0\x0B.,;!?");
+        $location = preg_replace('/\s+/', ' ', $location);
+        
+        // Must be at least 2 characters
+        if (strlen($location) < 2) {
+            return null;
+        }
+        
+        // Handle common country patterns - keep the city, add country after comma
+        $countryPatterns = [
+            '/^(.+?)\s+(colombia|mexico|argentina|chile|peru|spain|france|italy|germany|uk|usa|brazil|venezuela|ecuador|bolivia|uruguay|paraguay|japan|china|india|australia|canada|russia)$/i' => '$1, $2',
+            '/^(.+?)\s+(méxico)$/i' => '$1, Mexico',
+            '/^(.+?)\s+(españa)$/i' => '$1, Spain',
+            '/^(.+?)\s+(francia)$/i' => '$1, France',
+            '/^(.+?)\s+(italia)$/i' => '$1, Italy',
+            '/^(.+?)\s+(alemania)$/i' => '$1, Germany',
+            '/^(.+?)\s+(japón)$/i' => '$1, Japan',
+            '/^(.+?)\s+(estados unidos|eeuu)$/i' => '$1, USA',
+            '/^(.+?)\s+(reino unido)$/i' => '$1, UK',
+        ];
+        
+        foreach ($countryPatterns as $pattern => $replacement) {
+            if (preg_match($pattern, $location, $matches)) {
+                $cityName = trim($matches[1]);
+                $countryName = ucfirst(strtolower(trim($matches[2])));
+                
+                // For common mappings
+                $countryMappings = [
+                    'méxico' => 'Mexico',
+                    'españa' => 'Spain',
+                    'francia' => 'France',
+                    'italia' => 'Italy',
+                    'alemania' => 'Germany',
+                    'japón' => 'Japan',
+                    'estados unidos' => 'USA',
+                    'eeuu' => 'USA',
+                    'reino unido' => 'UK'
+                ];
+                
+                if (isset($countryMappings[strtolower($countryName)])) {
+                    $countryName = $countryMappings[strtolower($countryName)];
+                }
+                
+                // Try just the city name first (often works better with weather APIs)
+                return ucwords(strtolower($cityName));
+            }
+        }
+        
+        // Remove common words that aren't locations
+        $location = preg_replace('/\b(?:el|la|los|las|de|del|en|para|con|por|the|of|in|at|for|with)\b/i', '', $location);
+        $location = trim($location);
+        
+        if (strlen($location) < 2) {
+            return null;
+        }
+        
+        // Capitalize properly
+        return ucwords(strtolower($location));
+    }
+
+    /**
+     * Check if a word is a common word that's not likely to be a location
+     */
+    private function isCommonWord(string $word): bool
+    {
+        $commonWords = [
+            // Spanish
+            'Clima', 'Tiempo', 'Temperatura', 'Pronóstico', 'Pronostico', 'Hola', 'Como', 'Cómo', 
+            'Está', 'Esta', 'Dame', 'Dime', 'Quiero', 'Saber', 'Hace', 'Hay', 'Qué', 'Que',
+            'Cuál', 'Cual', 'Hoy', 'Mañana', 'Ayer', 'Ahora', 'Gracias', 'Por', 'Favor',
+            
+            // English
+            'Weather', 'Climate', 'Temperature', 'Forecast', 'Hello', 'Hi', 'How', 'What',
+            'When', 'Where', 'Today', 'Tomorrow', 'Yesterday', 'Now', 'Thanks', 'Please',
+            
+            // Days and months that might get capitalized
+            'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+            'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+            'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+            'September', 'October', 'November', 'December'
+        ];
+        
+        return in_array(ucfirst(strtolower($word)), $commonWords);
     }
 
     /**
