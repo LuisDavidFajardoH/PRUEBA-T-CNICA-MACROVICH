@@ -688,35 +688,97 @@ SEGURIDAD:
      */
     private function extractLocationFromMessage(string $message): ?string
     {
-        // Simple pattern matching for common city names
+        // Expanded list including Latin American cities
         $cities = [
-            'madrid' => 'Madrid',
-            'barcelona' => 'Barcelona', 
-            'valencia' => 'Valencia',
-            'sevilla' => 'Sevilla',
-            'bilbao' => 'Bilbao',
-            'málaga' => 'Málaga',
-            'murcia' => 'Murcia',
-            'palma' => 'Palma',
-            'las palmas' => 'Las Palmas',
-            'valladolid' => 'Valladolid'
+            // Spain
+            'madrid' => 'Madrid, Spain',
+            'barcelona' => 'Barcelona, Spain', 
+            'valencia' => 'Valencia, Spain',
+            'sevilla' => 'Sevilla, Spain',
+            'bilbao' => 'Bilbao, Spain',
+            'málaga' => 'Málaga, Spain',
+            'murcia' => 'Murcia, Spain',
+            'palma' => 'Palma, Spain',
+            'las palmas' => 'Las Palmas, Spain',
+            'valladolid' => 'Valladolid, Spain',
+            
+            // Colombia
+            'bogotá' => 'Bogotá, Colombia',
+            'bogota' => 'Bogotá, Colombia',
+            'medellín' => 'Medellín, Colombia',
+            'medellin' => 'Medellín, Colombia',
+            'cali' => 'Cali, Colombia',
+            'barranquilla' => 'Barranquilla, Colombia',
+            'cartagena' => 'Cartagena, Colombia',
+            
+            // Mexico
+            'méxico' => 'Mexico City, Mexico',
+            'mexico' => 'Mexico City, Mexico',
+            'guadalajara' => 'Guadalajara, Mexico',
+            'monterrey' => 'Monterrey, Mexico',
+            'puebla' => 'Puebla, Mexico',
+            'tijuana' => 'Tijuana, Mexico',
+            'león' => 'León, Mexico',
+            'cancún' => 'Cancún, Mexico',
+            'cancun' => 'Cancún, Mexico',
+            
+            // Argentina
+            'buenos aires' => 'Buenos Aires, Argentina',
+            'córdoba' => 'Córdoba, Argentina',
+            'cordoba' => 'Córdoba, Argentina',
+            'rosario' => 'Rosario, Argentina',
+            'mendoza' => 'Mendoza, Argentina',
+            
+            // Chile
+            'santiago' => 'Santiago, Chile',
+            'valparaíso' => 'Valparaíso, Chile',
+            'valparaiso' => 'Valparaíso, Chile',
+            'concepción' => 'Concepción, Chile',
+            'concepcion' => 'Concepción, Chile',
+            
+            // Peru
+            'lima' => 'Lima, Peru',
+            'arequipa' => 'Arequipa, Peru',
+            'cusco' => 'Cusco, Peru',
+            'cuzco' => 'Cusco, Peru',
+            
+            // Other major cities
+            'new york' => 'New York, USA',
+            'nueva york' => 'New York, USA',
+            'london' => 'London, UK',
+            'londres' => 'London, UK',
+            'paris' => 'Paris, France',
+            'parís' => 'Paris, France',
+            'berlin' => 'Berlin, Germany',
+            'berlín' => 'Berlin, Germany',
+            'rome' => 'Rome, Italy',
+            'roma' => 'Rome, Italy',
+            'tokyo' => 'Tokyo, Japan',
+            'tokio' => 'Tokyo, Japan'
         ];
 
         $messageLower = strtolower($message);
         
+        // First check for known cities
         foreach ($cities as $key => $city) {
             if (strpos($messageLower, $key) !== false) {
                 return $city;
             }
         }
 
-        // Try to extract using regex patterns
-        if (preg_match('/en\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+)/u', $message, $matches)) {
+        // Try to extract using regex patterns for general city names with country
+        if (preg_match('/(?:en|de|clima de|tiempo en|weather in)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+(?:,\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]*)?)/ui', $message, $matches)) {
             return trim($matches[1]);
         }
 
-        if (preg_match('/de\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+)/u', $message, $matches)) {
-            return trim($matches[1]);
+        // Try to extract any capitalized word that could be a city name
+        if (preg_match('/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})*)\b/u', $message, $matches)) {
+            $potential = trim($matches[1]);
+            // Filter out common words that aren't cities
+            $excludeWords = ['Clima', 'Tiempo', 'Hola', 'Como', 'Está', 'Dame', 'Dime', 'Quiero', 'Saber'];
+            if (!in_array($potential, $excludeWords)) {
+                return $potential;
+            }
         }
 
         return null;
