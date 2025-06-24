@@ -5,11 +5,13 @@
         <ChatSidebar
           :conversations="conversations"
           :currentConversationId="currentConversation?.id"
+          :user="authStore.user"
           appName="WeatherBot"
           appSubtitle="Asistente Meteorológico"
           @newChat="createNewChat"
           @selectConversation="loadConversation"
           @deleteConversation="deleteConversation"
+          @logout="handleLogout"
         />
       </template>
 
@@ -81,6 +83,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 
 // Components
@@ -105,6 +108,7 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 const chatStore = useChatStore()
+const authStore = useAuthStore()
 const { handleNetworkError, withErrorHandling, showError, clearErrors } = useErrorHandler()
 
 // Local state for error handling
@@ -124,23 +128,33 @@ const {
   loadConversation,
   createNewConversation,
   deleteConversation: deleteConv
-} = chatStore
-
-// Welcome suggestions
-const welcomeSuggestions = computed(() => [
-  {
-    id: '1',
-    title: '¿Cómo está el clima en Madrid?',
-    description: 'Consulta el clima actual',
-    message: '¿Cómo está el clima en Madrid?'
-  },
-  {
-    id: '2',
-    title: 'Pronóstico semanal',
-    description: 'Obtén el pronóstico extendido',
-    message: 'Pronóstico para Barcelona esta semana'
-  }
-])
+} = chatStore  // Welcome suggestions
+  const welcomeSuggestions = computed(() => [
+    {
+      id: '1',
+      title: '¿Cómo está el clima en Madrid?',
+      description: 'Consulta el clima actual de Madrid',
+      message: '¿Cómo está el clima en Madrid?'
+    },
+    {
+      id: '2',
+      title: 'Pronóstico de Barcelona',
+      description: 'Obtén el pronóstico para Barcelona',
+      message: 'Dame el pronóstico del tiempo para Barcelona'
+    },
+    {
+      id: '3',
+      title: 'Clima en Valencia',
+      description: 'Información meteorológica de Valencia',
+      message: '¿Qué tiempo hace en Valencia?'
+    },
+    {
+      id: '4',
+      title: 'Temperatura actual',
+      description: 'Consulta rápida de temperatura',
+      message: '¿Cuál es la temperatura actual en Sevilla?'
+    }
+  ])
 
 // Error actions for inline errors
 const errorActions = computed(() => [
@@ -262,6 +276,11 @@ const retryLastAction = () => {
   console.log('Retrying last action...')
 }
 
+const handleLogout = async () => {
+  await authStore.logout()
+  router.push('/auth')
+}
+
 // Error event handlers
 const handleErrorReported = (error: any) => {
   console.log('Error reported:', error)
@@ -274,6 +293,11 @@ const handleErrorRetry = (error: any) => {
 
 // Lifecycle
 onMounted(async () => {
+  // Initialize authentication (handled by router guard, but ensure user is loaded)
+  if (authStore.token && !authStore.user) {
+    await authStore.initializeAuth()
+  }
+  
   // Load conversations list with error handling
   await loadConversationsSafely()
   

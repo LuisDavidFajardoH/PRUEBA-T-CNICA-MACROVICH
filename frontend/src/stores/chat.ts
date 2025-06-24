@@ -4,6 +4,25 @@ import { defineStore } from 'pinia'
 import type { Message, Conversation, ChatState, ChatMessage } from '@/types'
 import axios from 'axios'
 
+// Configure axios defaults
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true
+})
+
+// Add request interceptor for auth token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 export const useChatStore = defineStore('chat', () => {
   // State
   const messages = ref<ChatMessage[]>([])
@@ -12,9 +31,6 @@ export const useChatStore = defineStore('chat', () => {
   const isLoading = ref(false)
   const isTyping = ref(false)
   const error = ref<string | null>(null)
-
-  // API base URL - this will be configured later
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
   // Computed
   const hasMessages = computed(() => messages.value.length > 0)
@@ -54,22 +70,34 @@ export const useChatStore = defineStore('chat', () => {
     isTyping.value = true
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/chat`, {
-        message: content,
-        conversation_id: currentConversation.value?.id
-      })
+      let response
+      
+      if (currentConversation.value?.id) {
+        // Send message to existing conversation
+        response = await api.post(`/chat/conversations/${currentConversation.value.id}/messages`, {
+          content: content
+        })
+      } else {
+        // Create new conversation with first message
+        response = await api.post('/chat/conversations', {
+          title: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+          first_message: content
+        })
+      }
 
       const { data } = response.data
 
       // Update assistant message with response
       updateMessage(assistantMessage.id, {
-        content: data.response,
+        content: data.ai_response || data.response || 'Respuesta recibida',
         isLoading: false
       })
 
       // Update current conversation if returned
       if (data.conversation) {
         currentConversation.value = data.conversation
+        // Refresh conversations list
+        await loadConversations()
       }
 
     } catch (err: any) {
@@ -94,7 +122,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const loadConversations = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/conversations`)
+      const response = await api.get('/chat/conversations')
       conversations.value = response.data.data
     } catch (err: any) {
       console.error('Error loading conversations:', err)
@@ -105,17 +133,17 @@ export const useChatStore = defineStore('chat', () => {
   const loadConversation = async (conversationId: string) => {
     try {
       isLoading.value = true
-      const response = await axios.get(`${API_BASE_URL}/conversations/${conversationId}`)
+      const response = await api.get(`/chat/conversations/${conversationId}`)
       const conversation = response.data.data
       
       currentConversation.value = conversation
       
       // Convert messages to ChatMessage format
-      messages.value = conversation.messages?.map((msg: Message) => ({
+      messages.value = conversation.messages?.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         role: msg.role,
-        timestamp: new Date(msg.createdAt),
+        timestamp: new Date(msg.created_at),
         isLoading: false
       })) || []
       
@@ -134,7 +162,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const deleteConversation = async (conversationId: string) => {
     try {
-      await axios.delete(`${API_BASE_URL}/conversations/${conversationId}`)
+      await api.delete(`/chat/conversations/${conversationId}`)
       conversations.value = conversations.value.filter(conv => conv.id !== conversationId)
       
       if (currentConversation.value?.id === conversationId) {
@@ -144,6 +172,10 @@ export const useChatStore = defineStore('chat', () => {
       console.error('Error deleting conversation:', err)
       error.value = 'Error al eliminar la conversación'
     }
+  }
+
+  const clearError = () => {
+    error.value = null
   }
 
   return {
@@ -164,6 +196,7 @@ export const useChatStore = defineStore('chat', () => {
     updateMessage,
     sendMessage,
     clearMessages,
+    clearError,
     loadConversations,
     loadConversation,
     createNewConversation,

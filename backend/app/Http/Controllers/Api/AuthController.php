@@ -123,9 +123,8 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'timezone' => $user->timezone,
-                    'language' => $user->language,
-                    'preferences' => $user->preferences,
-                    'last_login_at' => $user->last_login_at->toISOString(),
+                    'language' => $user->preferred_language ?? 'es',
+                    'last_login_at' => $user->last_login_at ? $user->last_login_at->toISOString() : null,
                 ],
                 'token' => $token,
                 'token_type' => 'Bearer'

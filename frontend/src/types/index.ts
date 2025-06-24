@@ -1,25 +1,26 @@
 // # cGFuZ29saW4=
 export interface Message {
   id: string
-  conversationId: string
+  conversation_id: string
   role: 'user' | 'assistant' | 'system'
   content: string
   metadata?: Record<string, any>
-  tokensUsed?: number
-  processingTime?: number
-  createdAt: string
-  updatedAt: string
+  tokens_used?: number
+  processing_time?: number
+  created_at: string
+  updated_at: string
 }
 
 export interface Conversation {
   id: string
-  userId: string
+  user_id: string
   title: string
-  isActive: boolean
-  lastMessageAt: string
-  createdAt: string
-  updatedAt: string
+  is_active: boolean
+  last_message_at: string
+  created_at: string
+  updated_at: string
   messages?: Message[]
+  messages_count?: number
 }
 
 export interface User {
@@ -27,9 +28,9 @@ export interface User {
   name: string
   email: string
   timezone: string
-  preferredLanguage: string
-  createdAt: string
-  updatedAt: string
+  preferred_language: string
+  created_at: string
+  updated_at: string
 }
 
 export interface WeatherData {

@@ -26,15 +26,8 @@ Route::get('/health', function () {
     ]);
 });
 
-// Weather service health check (public)
-Route::get('/weather/health', [WeatherController::class, 'health']);
-
-// Public weather endpoints for testing
-Route::prefix('weather/public')->group(function () {
-    Route::get('/current', [WeatherController::class, 'current']);
-    Route::get('/forecast', [WeatherController::class, 'forecast']);
-    Route::get('/search', [WeatherController::class, 'searchLocations']);
-});
+// Weather service health check (protected)
+Route::middleware('auth:sanctum')->get('/weather/health', [WeatherController::class, 'health']);
 
 // Authentication routes (public)
 Route::prefix('auth')->group(function () {

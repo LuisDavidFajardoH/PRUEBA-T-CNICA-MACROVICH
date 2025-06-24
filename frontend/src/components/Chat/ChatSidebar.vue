@@ -37,31 +37,63 @@
         />
       </div>
     </div>
+    
+    <!-- User info footer -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">
+          <i class="pi pi-user"></i>
+        </div>
+        <div class="user-details">
+          <div class="user-name">{{ user?.name || 'Usuario' }}</div>
+          <div class="user-email">{{ user?.email || '' }}</div>
+        </div>
+        <Button 
+          @click="$emit('logout')"
+          icon="pi pi-sign-out" 
+          text
+          rounded
+          size="small"
+          class="logout-btn"
+          v-tooltip="'Cerrar sesión'"
+          severity="secondary"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
 import Button from 'primevue/button'
 import ConversationItem from './ConversationItem.vue'
 
 interface Conversation {
   id: string
   title?: string
-  lastMessageAt: string
+  last_message_at?: string
+  updated_at?: string
+  messages_count?: number
+}
+
+interface User {
+  id: string
+  name: string
+  email: string
 }
 
 defineProps<{
   conversations: Conversation[]
-  currentConversationId?: string
-  appName?: string
-  appSubtitle?: string
+  currentConversationId?: string | null
+  appName: string
+  appSubtitle: string
+  user?: User | null
 }>()
 
 defineEmits<{
   newChat: []
-  selectConversation: [id: string]
-  deleteConversation: [id: string]
+  selectConversation: [conversationId: string]
+  deleteConversation: [conversationId: string]
+  logout: []
 }>()
 </script>
 
@@ -147,6 +179,62 @@ defineEmits<{
   gap: 0.5rem;
 }
 
+.sidebar-footer {
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem;
+  background: #f8fafc;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 2rem;
+  height: 2rem;
+  background: #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-btn {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.logout-btn:hover {
+  background-color: #e2e8f0;
+  color: #dc2626;
+}
+
 @media (max-width: 768px) {
   .chat-sidebar {
     width: 280px;
@@ -157,6 +245,10 @@ defineEmits<{
   }
   
   .conversations-container {
+    padding: 0.75rem;
+  }
+  
+  .sidebar-footer {
     padding: 0.75rem;
   }
 }
