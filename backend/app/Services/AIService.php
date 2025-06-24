@@ -19,8 +19,8 @@ class AIService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
-        $this->model = config('services.gemini.model', 'gemini-pro');
-        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+        $this->model = config('services.gemini.model', 'gemini-1.5-flash');
+        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1/models';
         
         if (empty($this->apiKey)) {
             throw new Exception('Gemini API key is not configured. Please set GEMINI_API_KEY in your .env file.');
@@ -121,15 +121,13 @@ class AIService
      */
     private function makeGeminiRequest(array $payload): Response
     {
-        $url = "{$this->baseUrl}/{$this->model}:generateContent";
+        $url = "{$this->baseUrl}/{$this->model}:generateContent?key={$this->apiKey}";
         
         $response = Http::timeout(30)
             ->withHeaders([
                 'Content-Type' => 'application/json',
             ])
-            ->post($url, array_merge($payload, [
-                'key' => $this->apiKey,
-            ]));
+            ->post($url, $payload);
 
         if (!$response->successful()) {
             $errorBody = $response->json();
