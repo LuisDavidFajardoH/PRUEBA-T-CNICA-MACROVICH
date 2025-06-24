@@ -1,187 +1,153 @@
 <template>
-  <div class="flex h-screen bg-gray-50">
-    <!-- Sidebar with conversations -->
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
-      <!-- Header -->
-      <div class="p-4 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-          <h1 class="text-xl font-semibold text-gray-900">WeatherBot</h1>
-          <button
-            @click="createNewChat"
-            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-            title="Nueva conversación"
-          >
-            <PlusIcon class="w-5 h-5" />
-          </button>
+  <div class="chat-container">
+    <!-- Sidebar -->
+    <div class="chat-sidebar">
+      <div class="sidebar-header">
+        <div class="app-branding">
+          <i class="pi pi-cloud"></i>
+          <div class="app-info">
+            <h3>WeatherBot</h3>
+            <span>Asistente Meteorológico</span>
+          </div>
         </div>
-        <p class="text-sm text-gray-500 mt-1">Tu asistente meteorológico con IA</p>
+        <Button 
+          @click="createNewChat"
+          icon="pi pi-plus" 
+          text
+          rounded
+          size="small"
+          class="new-chat-btn"
+          v-tooltip="'Nueva conversación'"
+        />
       </div>
-
-      <!-- Conversations list -->
-      <div class="flex-1 overflow-y-auto">
-        <div class="p-2">
+      
+      <div class="conversations-container">
+        <div v-if="conversations.length === 0" class="empty-state">
+          <i class="pi pi-comments"></i>
+          <p>No hay conversaciones</p>
+          <small>¡Empieza una nueva!</small>
+        </div>
+        
+        <div v-else class="conversations-list">
           <div
             v-for="conversation in conversations"
             :key="conversation.id"
             @click="loadConversation(conversation.id)"
             :class="[
-              'p-3 rounded-lg cursor-pointer transition-colors mb-2',
-              currentConversation?.id === conversation.id
-                ? 'bg-blue-50 border border-blue-200'
-                : 'hover:bg-gray-50'
+              'conversation-item',
+              { 'active': currentConversation?.id === conversation.id }
             ]"
           >
-            <div class="flex items-center justify-between">
-              <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-medium text-gray-900 truncate">
-                  {{ conversation.title || 'Nueva conversación' }}
-                </h3>
-                <p class="text-xs text-gray-500 mt-1">
-                  {{ formatDate(conversation.lastMessageAt) }}
-                </p>
-              </div>
-              <button
-                @click.stop="deleteConversation(conversation.id)"
-                class="p-1 text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <TrashIcon class="w-4 h-4" />
-              </button>
+            <div class="conversation-content">
+              <h4>{{ conversation.title || 'Nueva conversación' }}</h4>
+              <span>{{ formatDate(conversation.lastMessageAt) }}</span>
             </div>
-          </div>
-          
-          <!-- Empty state -->
-          <div v-if="conversations.length === 0" class="text-center py-8">
-            <ChatBubbleLeftRightIcon class="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p class="text-sm text-gray-500">No hay conversaciones aún</p>
-            <p class="text-xs text-gray-400 mt-1">¡Empieza una nueva conversación!</p>
+            <Button
+              @click.stop="deleteConversation(conversation.id)"
+              icon="pi pi-trash"
+              text
+              rounded
+              size="small"
+              severity="danger"
+              class="delete-btn"
+            />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Main chat area -->
-    <div class="flex-1 flex flex-col">
-      <!-- Chat header -->
-      <div class="bg-white border-b border-gray-200 p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900">
-              {{ currentConversation?.title || 'Nueva conversación' }}
-            </h2>
-            <p class="text-sm text-gray-500">
-              Pregúntame sobre el clima en cualquier lugar del mundo
-            </p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <div v-if="isTyping" class="flex items-center text-sm text-blue-600">
-              <div class="flex space-x-1 mr-2">
-                <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-              </div>
-              Escribiendo...
-            </div>
-          </div>
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <div class="header-info">
+          <h2>{{ currentConversation?.title || 'Nueva conversación' }}</h2>
+          <p>Pregúntame sobre el clima en cualquier lugar del mundo</p>
+        </div>
+        
+        <div v-if="isTyping" class="typing-indicator">
+          <ProgressSpinner size="small" />
+          <span>Escribiendo...</span>
         </div>
       </div>
 
-      <!-- Messages area -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        <!-- Welcome message when no messages -->
-        <div v-if="!hasMessages" class="text-center py-12">
-          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CloudIcon class="w-8 h-8 text-blue-600" />
+      <!-- Messages Area -->
+      <div class="messages-container">
+        <!-- Welcome Screen -->
+        <div v-if="!hasMessages" class="welcome-screen">
+          <div class="welcome-avatar">
+            <i class="pi pi-cloud"></i>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">¡Hola! Soy tu asistente meteorológico</h3>
-          <p class="text-gray-600 mb-4 max-w-md mx-auto">
-            Puedes preguntarme sobre el clima actual, pronósticos, o cualquier información relacionada con el tiempo.
-          </p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
-            <button
+          <h3>¡Hola! Soy tu asistente meteorológico</h3>
+          <p>Puedes preguntarme sobre el clima actual, pronósticos, o cualquier información relacionada con el tiempo.</p>
+          
+          <div class="suggestion-cards">
+            <Card 
               @click="sendSampleMessage('¿Cómo está el clima en Madrid?')"
-              class="p-3 bg-white border border-gray-200 rounded-lg text-left hover:bg-gray-50 transition-colors"
+              class="suggestion-card"
             >
-              <div class="text-sm font-medium text-gray-900">¿Cómo está el clima en Madrid?</div>
-              <div class="text-xs text-gray-500 mt-1">Consulta el clima actual</div>
-            </button>
-            <button
+              <template #content>
+                <h4>¿Cómo está el clima en Madrid?</h4>
+                <p>Consulta el clima actual</p>
+              </template>
+            </Card>
+            
+            <Card 
               @click="sendSampleMessage('Pronóstico para Barcelona esta semana')"
-              class="p-3 bg-white border border-gray-200 rounded-lg text-left hover:bg-gray-50 transition-colors"
+              class="suggestion-card"
             >
-              <div class="text-sm font-medium text-gray-900">Pronóstico semanal</div>
-              <div class="text-xs text-gray-500 mt-1">Obtén el pronóstico extendido</div>
-            </button>
+              <template #content>
+                <h4>Pronóstico semanal</h4>
+                <p>Obtén el pronóstico extendido</p>
+              </template>
+            </Card>
           </div>
         </div>
 
         <!-- Messages -->
-        <div
-          v-for="message in messages"
-          :key="message.id"
-          :class="[
-            'flex',
-            message.role === 'user' ? 'justify-end' : 'justify-start'
-          ]"
-        >
+        <div v-else class="messages-list">
           <div
-            :class="[
-              'max-w-xs lg:max-w-md px-4 py-2 rounded-lg',
-              message.role === 'user'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-900'
-            ]"
+            v-for="message in messages"
+            :key="message.id"
+            :class="['message', `message-${message.role}`]"
           >
-            <div v-if="message.isLoading" class="flex items-center space-x-2">
-              <div class="flex space-x-1">
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="message-bubble">
+              <div v-if="message.isLoading" class="loading-state">
+                <ProgressSpinner size="small" />
+                <span>Cargando...</span>
+              </div>
+              <div v-else class="message-content">
+                <p>{{ message.content }}</p>
+                <small>{{ formatTime(message.timestamp) }}</small>
               </div>
             </div>
-            <div v-else>
-              <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
-              <p
-                :class="[
-                  'text-xs mt-1',
-                  message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                ]"
-              >
-                {{ formatTime(message.timestamp) }}
-              </p>
-            </div>
           </div>
         </div>
       </div>
 
-      <!-- Error message -->
-      <div v-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mx-4">
-        <div class="flex">
-          <ExclamationTriangleIcon class="w-5 h-5 text-red-400" />
-          <div class="ml-3">
-            <p class="text-sm text-red-700">{{ error }}</p>
-          </div>
-        </div>
+      <!-- Error Message -->
+      <div v-if="error" class="error-container">
+        <Message severity="error" :closable="false">
+          {{ error }}
+        </Message>
       </div>
 
-      <!-- Message input -->
-      <div class="bg-white border-t border-gray-200 p-4">
-        <form @submit.prevent="handleSendMessage" class="flex space-x-3">
-          <div class="flex-1">
-            <input
-              v-model="messageInput"
-              type="text"
-              placeholder="Pregúntame sobre el clima..."
-              :disabled="isLoading"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
-          </div>
-          <button
+      <!-- Message Input -->
+      <div class="input-container">
+        <form @submit.prevent="handleSendMessage" class="message-form">
+          <InputText
+            v-model="messageInput"
+            placeholder="Pregúntame sobre el clima..."
+            :disabled="isLoading"
+            class="message-input"
+          />
+          <Button
             type="submit"
             :disabled="!messageInput.trim() || isLoading"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            <PaperAirplaneIcon class="w-5 h-5" />
-          </button>
+            icon="pi pi-send"
+            :loading="isLoading"
+            class="send-btn"
+          />
         </form>
       </div>
     </div>
@@ -194,14 +160,16 @@ import { useRoute, useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import {
-  PlusIcon,
-  TrashIcon,
-  ChatBubbleLeftRightIcon,
-  CloudIcon,
-  PaperAirplaneIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/outline'
+
+// PrimeVue Components
+import Card from 'primevue/card'
+import Button from 'primevue/button'
+import Toolbar from 'primevue/toolbar'
+import ScrollPanel from 'primevue/scrollpanel'
+import Avatar from 'primevue/avatar'
+import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
+import ProgressSpinner from 'primevue/progressspinner'
 
 // Props
 const props = defineProps<{
@@ -278,3 +246,409 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.chat-container {
+  display: flex;
+  height: 100vh;
+  background-color: #f8fafc;
+}
+
+/* Sidebar Styles */
+.chat-sidebar {
+  width: 320px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-branding i {
+  font-size: 1.5rem;
+  color: #3b82f6;
+}
+
+.app-info h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.app-info span {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.new-chat-btn {
+  color: #64748b;
+}
+
+.new-chat-btn:hover {
+  background-color: #f1f5f9;
+  color: #3b82f6;
+}
+
+.conversations-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}
+
+.empty-state p {
+  margin: 0.5rem 0;
+  font-weight: 500;
+}
+
+.empty-state small {
+  color: #94a3b8;
+}
+
+.conversations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.conversation-item:hover {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.conversation-item.active {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.conversation-content {
+  flex: 1;
+}
+
+.conversation-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.conversation-content span {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.conversation-item:hover .delete-btn {
+  opacity: 1;
+}
+
+/* Main Chat Area */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.chat-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-info h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.header-info p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #3b82f6;
+  font-size: 0.875rem;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* Welcome Screen */
+.welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.welcome-avatar {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.welcome-avatar i {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.welcome-screen h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.welcome-screen p {
+  margin: 0 0 2rem 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.suggestion-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.suggestion-card {
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
+}
+
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.suggestion-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.suggestion-card p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Messages */
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.message {
+  display: flex;
+}
+
+.message-user {
+  justify-content: flex-end;
+}
+
+.message-assistant {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 70%;
+  padding: 1rem;
+  border-radius: 1rem;
+  position: relative;
+}
+
+.message-user .message-bubble {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.message-assistant .message-bubble {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+}
+
+.message-content p {
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
+.message-content small {
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
+.message-user .message-content small {
+  color: #bfdbfe;
+}
+
+.message-assistant .message-content small {
+  color: #64748b;
+}
+
+/* Error Container */
+.error-container {
+  padding: 0 1.5rem;
+}
+
+/* Input Container */
+.input-container {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: white;
+}
+
+.message-form {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.message-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.send-btn {
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-sidebar {
+    width: 280px;
+  }
+  
+  .sidebar-header {
+    padding: 1rem;
+  }
+  
+  .conversations-container {
+    padding: 0.75rem;
+  }
+  
+  .chat-header {
+    padding: 1rem;
+  }
+  
+  .messages-container {
+    padding: 1rem;
+  }
+  
+  .input-container {
+    padding: 1rem;
+  }
+  
+  .message-bubble {
+    max-width: 85%;
+  }
+  
+  .suggestion-cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
