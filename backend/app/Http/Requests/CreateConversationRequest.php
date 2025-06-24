@@ -21,7 +21,7 @@ class CreateConversationRequest extends FormRequest
     {
         return [
             'title' => 'nullable|string|max:255',
-            'initial_message' => 'nullable|string|max:2000',
+            'first_message' => 'nullable|string|max:2000',
         ];
     }
 

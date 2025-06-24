@@ -2,8 +2,12 @@
   <div :class="['message', `message-${message.role}`]">
     <div class="message-bubble">
       <div v-if="message.isLoading" class="loading-state">
-        <ProgressSpinner size="small" />
-        <span>{{ loadingText }}</span>
+        <div class="loading-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <span>{{ loadingText || 'Escribiendo...' }}</span>
       </div>
       <div v-else class="message-content">
         <p>{{ message.content }}</p>
@@ -14,9 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
 import { format } from 'date-fns'
-import ProgressSpinner from 'primevue/progressspinner'
 
 interface Message {
   id: string
@@ -73,6 +75,36 @@ const formatTime = (date: Date) => {
   align-items: center;
   gap: 0.5rem;
   color: #64748b;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.loading-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #64748b;
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 .message-content p {

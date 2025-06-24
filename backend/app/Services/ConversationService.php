@@ -175,7 +175,7 @@ class ConversationService
             $prompt = $this->buildAIPrompt($userMessage, $context, $weatherData);
             
             // Get AI response
-            $response = AI::generateTextResponse($prompt);
+            $response = AI::generateWeatherResponseSimple($userMessage);
 
             return [
                 'content' => $response,

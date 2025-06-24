@@ -3,13 +3,13 @@
     <ChatLayout>
       <template #sidebar>
         <ChatSidebar
-          :conversations="conversations"
-          :currentConversationId="currentConversation?.id"
+          :conversations="chatStore.conversations"
+          :currentConversationId="chatStore.currentConversation?.id?.toString() || null"
           :user="authStore.user"
           appName="WeatherBot"
           appSubtitle="Asistente Meteorológico"
           @newChat="createNewChat"
-          @selectConversation="loadConversation"
+          @selectConversation="loadConversationSafely"
           @deleteConversation="deleteConversation"
           @logout="handleLogout"
         />
@@ -17,9 +17,9 @@
 
       <template #header>
         <ChatHeader
-          :title="currentConversation?.title || 'Nueva conversación'"
+          :title="chatStore.currentConversation?.title || 'Nueva conversación'"
           subtitle="Pregúntame sobre el clima en cualquier lugar del mundo"
-          :isTyping="isTyping"
+          :isTyping="chatStore.isTyping"
           typingText="Escribiendo..."
         />
       </template>
@@ -38,7 +38,7 @@
         
         <!-- Welcome screen -->
         <WelcomeScreen
-          v-else-if="!hasMessages"
+          v-else-if="!chatStore.hasMessages"
           title="¡Hola! Soy tu asistente meteorológico"
           description="Puedes preguntarme sobre el clima actual, pronósticos, o cualquier información relacionada con el tiempo."
           avatarIcon="pi pi-cloud"
@@ -49,28 +49,28 @@
         <!-- Messages list -->
         <MessagesList
           v-else
-          :messages="messages"
+          :messages="chatStore.messages"
         />
       </template>
 
       <template #error>
         <!-- Inline error for non-critical errors -->
         <ErrorState
-          v-if="error && !criticalError"
-          :error="error"
+          v-if="chatStore.error && !criticalError"
+          :error="chatStore.error"
           title="Error temporal"
           variant="error"
           :closable="true"
           :actions="errorActions"
-          @close="clearError"
+          @close="chatStore.clearError"
         />
       </template>
 
       <template #input>
         <MessageInput
           placeholder="Pregúntame sobre el clima..."
-          :disabled="isLoading"
-          :loading="isLoading"
+          :disabled="chatStore.isLoading"
+          :loading="chatStore.isLoading"
           submitIcon="pi pi-send"
           @submit="handleSendMessage"
         />
@@ -128,7 +128,9 @@ const {
   loadConversation,
   createNewConversation,
   deleteConversation: deleteConv
-} = chatStore  // Welcome suggestions
+} = chatStore
+
+// Welcome suggestions
   const welcomeSuggestions = computed(() => [
     {
       id: '1',
@@ -166,7 +168,11 @@ const errorActions = computed(() => [
   },
   {
     label: 'Limpiar',
-    handler: () => clearError(),
+    handler: () => {
+      chatStore.clearError()
+      clearErrors()
+      criticalError.value = null
+    },
     icon: 'pi pi-times',
     severity: 'secondary' as const
   }
@@ -174,13 +180,12 @@ const errorActions = computed(() => [
 
 // Methods
 const handleSendMessage = async (message: string) => {
-  await withErrorHandling(
-    () => sendMessage(message),
-    {
-      context: 'sending message',
-      successMessage: 'Mensaje enviado correctamente'
-    }
-  )
+  try {
+    await chatStore.sendMessage(message)
+  } catch (error) {
+    console.error('Error sending message:', error)
+    // Error is already handled in the store
+  }
 }
 
 const sendSampleMessage = async (message: string) => {
@@ -188,86 +193,67 @@ const sendSampleMessage = async (message: string) => {
 }
 
 const createNewChat = async () => {
-  await withErrorHandling(
-    async () => {
-      createNewConversation()
-      router.push('/')
-    },
-    {
-      context: 'creating new chat'
-    }
-  )
+  try {
+    chatStore.createNewConversation()
+    router.push('/')
+  } catch (error) {
+    console.error('Error creating new chat:', error)
+  }
 }
 
 const deleteConversation = async (conversationId: string) => {
   if (confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
-    await withErrorHandling(
-      () => deleteConv(conversationId),
-      {
-        context: 'deleting conversation',
-        successMessage: 'Conversación eliminada correctamente'
-      }
-    )
+    try {
+      await chatStore.deleteConversation(conversationId)
+    } catch (error) {
+      console.error('Error deleting conversation:', error)
+    }
   }
 }
 
 const loadConversationSafely = async (conversationId: string) => {
-  await withErrorHandling(
-    () => loadConversation(conversationId),
-    {
-      context: 'loading conversation',
-      retryAction: () => loadConversation(conversationId)
-    }
-  )
+  try {
+    await chatStore.loadConversation(conversationId)
+  } catch (error) {
+    console.error('Error loading conversation:', error)
+  }
 }
 
 const loadConversationsSafely = async () => {
-  const result = await withErrorHandling(
-    () => loadConversations(),
-    {
-      context: 'loading conversations',
-      retryAction: () => loadConversations()
-    }
-  )
-
-  // If loading conversations fails critically, show empty error state
-  if (!result && !conversations.value?.length) {
-    criticalError.value = {
-      type: 'network',
-      title: 'No se pudieron cargar las conversaciones',
-      message: 'Hubo un problema al conectar con el servidor. Por favor, verifica tu conexión a internet.',
-      suggestions: [
-        'Verifica tu conexión a internet',
-        'Recarga la página',
-        'Intenta más tarde'
-      ],
-      primaryAction: {
-        label: 'Recargar',
-        handler: () => {
-          criticalError.value = null
-          loadConversationsSafely()
+  try {
+    await chatStore.loadConversations()
+  } catch (error) {
+    console.error('Error loading conversations:', error)
+    // Show critical error state if no conversations exist
+    if (!chatStore.conversations?.length) {
+      criticalError.value = {
+        type: 'network',
+        title: 'No se pudieron cargar las conversaciones',
+        message: 'Hubo un problema al conectar con el servidor. Por favor, verifica tu conexión a internet.',
+        suggestions: [
+          'Verifica tu conexión a internet',
+          'Recarga la página',
+          'Intenta más tarde'
+        ],
+        primaryAction: {
+          label: 'Recargar',
+          handler: () => {
+            criticalError.value = null
+            loadConversationsSafely()
+          },
+          icon: 'pi pi-refresh'
         },
-        icon: 'pi pi-refresh'
-      },
-      secondaryAction: {
-        label: 'Crear nueva conversación',
-        handler: () => {
-          criticalError.value = null
-          createNewChat()
-        },
-        icon: 'pi pi-plus'
+        secondaryAction: {
+          label: 'Crear nueva conversación',
+          handler: () => {
+            criticalError.value = null
+            createNewChat()
+          },
+          icon: 'pi pi-plus'
+        }
       }
     }
   }
-}
-
-const clearError = () => {
-  // Clear both store error and critical error
-  if (chatStore.clearError) {
-    chatStore.clearError()
-  }
-  criticalError.value = null
-  clearErrors()
 }
 
 const retryLastAction = () => {

@@ -12,7 +12,7 @@ export interface Message {
 }
 
 export interface Conversation {
-  id: string
+  id: string | number
   user_id: string
   title: string
   is_active: boolean

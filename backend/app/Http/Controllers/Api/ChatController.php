@@ -47,10 +47,10 @@ class ChatController extends Controller
             );
 
             // Process initial message if provided
-            if ($request->has('initial_message')) {
+            if ($request->has('first_message')) {
                 $aiMessage = $this->conversationService->processMessage(
                     $conversation,
-                    $request->validated('initial_message')
+                    $request->validated('first_message')
                 );
 
                 // Reload conversation with messages

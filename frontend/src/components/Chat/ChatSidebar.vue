@@ -31,7 +31,7 @@
           v-for="conversation in conversations"
           :key="conversation.id"
           :conversation="conversation"
-          :isActive="currentConversationId === conversation.id"
+          :isActive="currentConversationId === conversation.id?.toString()"
           @select="$emit('selectConversation', conversation.id)"
           @delete="$emit('deleteConversation', conversation.id)"
         />

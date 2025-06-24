@@ -118,6 +118,26 @@
             }}
           </button>
         </div>
+
+        <!-- Demo credentials -->
+        <div v-if="isLogin" class="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div class="text-center">
+            <h3 class="text-sm font-medium text-blue-900 mb-2">
+              Credenciales de prueba
+            </h3>
+            <div class="text-xs text-blue-700 space-y-1">
+              <p><strong>Email:</strong> demo@weatherbot.com</p>
+              <p><strong>Contraseña:</strong> password123</p>
+            </div>
+            <button
+              type="button"
+              @click="fillDemoCredentials"
+              class="mt-2 text-xs text-blue-600 hover:text-blue-500 underline"
+            >
+              Llenar automáticamente
+            </button>
+          </div>
+        </div>
       </form>
 
       <!-- Demo credentials -->

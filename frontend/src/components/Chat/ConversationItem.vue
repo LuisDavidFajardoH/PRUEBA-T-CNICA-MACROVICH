@@ -8,7 +8,7 @@
   >
     <div class="conversation-content">
       <h4>{{ conversation.title || 'Nueva conversación' }}</h4>
-      <span>{{ formatDate(conversation.lastMessageAt) }}</span>
+      <span>{{ formatDate(conversation.last_message_at || conversation.lastMessageAt || conversation.created_at) }}</span>
     </div>
     <Button
       @click.stop="handleDelete"
@@ -23,15 +23,16 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Button from 'primevue/button'
 
 interface Conversation {
-  id: string
+  id: string | number
   title?: string
-  lastMessageAt: string
+  lastMessageAt?: string
+  last_message_at?: string
+  created_at?: string
 }
 
 defineProps<{
@@ -44,7 +45,8 @@ const emit = defineEmits<{
   delete: []
 }>()
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'Ahora'
   const date = new Date(dateString)
   return format(date, 'dd MMM', { locale: es })
 }

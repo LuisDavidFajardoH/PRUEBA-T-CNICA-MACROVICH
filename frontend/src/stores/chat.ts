@@ -37,13 +37,13 @@ export const useChatStore = defineStore('chat', () => {
   const lastMessage = computed(() => messages.value[messages.value.length - 1])
 
   // Actions
-  const addMessage = (content: string, role: 'user' | 'assistant' = 'user') => {
+  const addMessage = (content: string, role: 'user' | 'assistant' = 'user', id?: string) => {
     const message: ChatMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       content,
       role,
       timestamp: new Date(),
-      isLoading: role === 'assistant'
+      isLoading: role === 'assistant' && !content
     }
     messages.value.push(message)
     return message
@@ -60,12 +60,6 @@ export const useChatStore = defineStore('chat', () => {
     if (!content.trim()) return
 
     error.value = null
-    
-    // Add user message
-    addMessage(content, 'user')
-    
-    // Add loading assistant message
-    const assistantMessage = addMessage('', 'assistant')
     isLoading.value = true
     isTyping.value = true
 
@@ -77,38 +71,56 @@ export const useChatStore = defineStore('chat', () => {
         response = await api.post(`/chat/conversations/${currentConversation.value.id}/messages`, {
           content: content
         })
+        
+        const { data } = response.data
+        
+        // Add the user message if not already present
+        if (data.user_message) {
+          const userExists = messages.value.find(m => m.id === data.user_message.id.toString())
+          if (!userExists) {
+            addMessage(data.user_message.content, 'user', data.user_message.id.toString())
+          }
+        }
+        
+        // Add the AI response
+        if (data.ai_message) {
+          addMessage(data.ai_message.content, 'assistant', data.ai_message.id.toString())
+        }
+        
       } else {
         // Create new conversation with first message
         response = await api.post('/chat/conversations', {
           title: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
           first_message: content
         })
+        
+        const { data } = response.data
+        
+        // Set the current conversation
+        currentConversation.value = data
+        
+        // Clear existing messages and add all messages from the conversation
+        messages.value = []
+        
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach((msg: any) => {
+            addMessage(msg.content, msg.role, msg.id.toString())
+          })
+        }
       }
 
-      const { data } = response.data
-
-      // Update assistant message with response
-      updateMessage(assistantMessage.id, {
-        content: data.ai_response || data.response || 'Respuesta recibida',
-        isLoading: false
-      })
-
-      // Update current conversation if returned
-      if (data.conversation) {
-        currentConversation.value = data.conversation
-        // Refresh conversations list
-        await loadConversations()
+      // Refresh conversations list only if not already loading
+      if (!isLoading.value) {
+        loadConversations().catch(console.error)
       }
 
     } catch (err: any) {
       console.error('Error sending message:', err)
       error.value = err.response?.data?.message || 'Error al enviar el mensaje'
       
-      // Update assistant message with error
-      updateMessage(assistantMessage.id, {
-        content: 'Lo siento, ocurrió un error al procesar tu mensaje. Por favor intenta nuevamente.',
-        isLoading: false
-      })
+      // Add error message for user feedback
+      addMessage('Lo siento, ocurrió un error al procesar tu mensaje. Por favor intenta nuevamente.', 'assistant')
+      
     } finally {
       isLoading.value = false
       isTyping.value = false
