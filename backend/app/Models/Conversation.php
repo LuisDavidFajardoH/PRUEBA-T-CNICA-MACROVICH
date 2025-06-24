@@ -22,6 +22,8 @@ class Conversation extends Model
         'title',
         'is_active',
         'last_message_at',
+        'status', // Add virtual status attribute
+        'metadata'
     ];
 
     /**
@@ -32,7 +34,24 @@ class Conversation extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'last_message_at' => 'datetime',
+        'metadata' => 'array'
     ];
+
+    /**
+     * Status accessor - converts is_active to status string
+     */
+    public function getStatusAttribute(): string
+    {
+        return $this->is_active ? 'active' : 'archived';
+    }
+
+    /**
+     * Status mutator - converts status string to is_active boolean
+     */
+    public function setStatusAttribute(string $value): void
+    {
+        $this->attributes['is_active'] = $value === 'active';
+    }
 
     /**
      * Get the user that owns the conversation.
