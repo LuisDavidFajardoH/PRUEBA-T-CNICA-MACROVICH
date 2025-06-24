@@ -10,6 +10,10 @@ export { default as MessageInput } from './Chat/MessageInput.vue'
 
 // UI Components
 export { default as ErrorMessage } from './UI/ErrorMessage.vue'
+export { default as ErrorBoundary } from './UI/ErrorBoundary.vue'
+export { default as SimpleErrorBoundary } from './UI/SimpleErrorBoundary.vue'
+export { default as ErrorState } from './UI/ErrorState.vue'
+export { default as EmptyErrorState } from './UI/EmptyErrorState.vue'
 export { default as LoadingSpinner } from './UI/LoadingSpinner.vue'
 
 // Layout Components

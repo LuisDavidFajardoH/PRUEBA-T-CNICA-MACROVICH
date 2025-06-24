@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { SimpleErrorBoundary } from '@/components'
 </script>
 
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
-    <RouterView />
-  </div>
+  <SimpleErrorBoundary :globalErrorHandler="true" :showReportButton="true">
+    <div id="app" class="min-h-screen bg-gray-50">
+      <RouterView />
+    </div>
+  </SimpleErrorBoundary>
 </template>
 
 <style>

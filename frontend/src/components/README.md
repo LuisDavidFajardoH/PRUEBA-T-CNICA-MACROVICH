@@ -110,7 +110,7 @@ Input para escribir y enviar mensajes.
 ## Componentes UI
 
 ### ErrorMessage
-Componente para mostrar mensajes de error.
+Componente básico para mostrar mensajes de error.
 
 **Props:**
 - `error?: string` - Mensaje de error
@@ -119,6 +119,53 @@ Componente para mostrar mensajes de error.
 
 **Eventos:**
 - `close` - Se emite al cerrar el mensaje
+
+### ErrorBoundary
+Componente avanzado para manejo global de errores con toasts y modales.
+
+**Props:**
+- `showReportButton?: boolean` - Mostrar botón para reportar errores
+- `globalErrorHandler?: boolean` - Capturar errores globales de JavaScript
+
+**Eventos:**
+- `errorReported(error: ErrorInfo)` - Se emite cuando se reporta un error
+- `errorRetried(error: ErrorInfo)` - Se emite cuando se reintenta una acción
+
+**Funcionalidad:**
+- Manejo automático de errores por severidad
+- Toast notifications para errores leves
+- Modal detallado para errores críticos
+- Historial de errores
+- Acciones de reintento automáticas
+- Detalles técnicos expandibles
+
+### ErrorState
+Componente inline para mostrar estados de error con acciones.
+
+**Props:**
+- `error?: string` - Mensaje de error
+- `title?: string` - Título del error
+- `message?: string` - Mensaje personalizado
+- `details?: string` - Detalles técnicos
+- `variant?: 'error' | 'warning' | 'info'` - Variante visual
+- `compact?: boolean` - Versión compacta
+- `showDetails?: boolean` - Mostrar toggle de detalles
+- `closable?: boolean` - Botón de cerrar
+- `actions?: ErrorAction[]` - Acciones personalizadas
+
+**Eventos:**
+- `close` - Se emite al cerrar
+
+### EmptyErrorState
+Componente para estados de error vacíos con ilustraciones.
+
+**Props:**
+- `title: string` - Título del estado
+- `description: string` - Descripción del problema
+- `type?: 'error' | 'network' | 'not-found' | 'unauthorized' | 'maintenance'` - Tipo de error
+- `suggestions?: string[]` - Lista de sugerencias
+- `primaryAction?: ActionButton` - Acción principal
+- `secondaryAction?: ActionButton` - Acción secundaria
 
 ### LoadingSpinner
 Spinner de carga reutilizable.
