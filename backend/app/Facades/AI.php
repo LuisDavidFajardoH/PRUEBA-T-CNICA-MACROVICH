@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static array generateResponse(string $userMessage, array $conversationHistory = [], bool $includeWeatherFunction = true)
+ * @method static array generateWeatherResponse(string $userMessage, array $conversationHistory = [])
+ * @method static string generateWeatherResponseText(string $userMessage, array $conversationHistory = [])
+ * @method static string generateWeatherResponseSimple(string $userMessage)
  * @method static bool detectPromptInjection(string $input)
  * @method static string sanitizeInput(string $input)
  * @method static array getHealthStatus()

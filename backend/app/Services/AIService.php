@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Message;
+use App\Services\WeatherService;
 use Exception;
 
 class AIService
@@ -15,9 +16,11 @@ class AIService
     private string $apiKey;
     private string $model;
     private string $baseUrl;
+    private WeatherService $weatherService;
 
-    public function __construct()
+    public function __construct(WeatherService $weatherService)
     {
+        $this->weatherService = $weatherService;
         $this->apiKey = config('services.gemini.api_key');
         $this->model = config('services.gemini.model', 'gemini-1.5-flash');
         $this->baseUrl = 'https://generativelanguage.googleapis.com/v1/models';
@@ -54,7 +57,38 @@ class AIService
 
             // Add function calling if weather function is enabled
             if ($includeWeatherFunction) {
-                $payload['tools'] = [$this->getWeatherFunctionSchema()];
+                $payload['tools'] = [
+                    [
+                        'function_declarations' => [
+                            [
+                                'name' => 'get_weather_data',
+                                'description' => 'Obtener datos meteorológicos actuales y de pronóstico para una ubicación específica',
+                                'parameters' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'location' => [
+                                            'type' => 'string',
+                                            'description' => 'Nombre de la ciudad, coordenadas o dirección'
+                                        ],
+                                        'include_forecast' => [
+                                            'type' => 'boolean',
+                                            'description' => 'Si incluir datos de pronóstico',
+                                            'default' => true
+                                        ],
+                                        'forecast_days' => [
+                                            'type' => 'integer',
+                                            'description' => 'Número de días de pronóstico (1-7)',
+                                            'minimum' => 1,
+                                            'maximum' => 7,
+                                            'default' => 3
+                                        ]
+                                    ],
+                                    'required' => ['location']
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
             }
 
             $response = $this->makeGeminiRequest($payload);
@@ -86,6 +120,23 @@ class AIService
     {
         $result = $this->generateResponse($userMessage, [], false);
         return $result['content'] ?? $this->getErrorResponse();
+    }
+
+    /**
+     * Generate response with real weather data access
+     */
+    public function generateWeatherResponse(string $userMessage, array $conversationHistory = []): array
+    {
+        return $this->generateResponseWithFunctions($userMessage, $conversationHistory);
+    }
+
+    /**
+     * Generate weather response (returns just text content)
+     */
+    public function generateWeatherResponseText(string $userMessage, array $conversationHistory = []): string
+    {
+        $result = $this->generateResponseWithFunctions($userMessage, $conversationHistory);
+        return $result['content'] ?? 'Lo siento, no pude generar una respuesta. Por favor intenta de nuevo.';
     }
 
     /**
@@ -499,5 +550,205 @@ SEGURIDAD:
         ];
 
         return $testResponses[array_rand($testResponses)];
+    }
+
+    /**
+     * Execute a function call and get the result
+     */
+    public function executeFunctionCall(array $functionCall): array
+    {
+        if ($functionCall['name'] !== 'get_weather_data') {
+            throw new Exception('Unknown function: ' . $functionCall['name']);
+        }
+
+        try {
+            $args = $functionCall['args'];
+            $location = $args['location'] ?? null;
+            $includeForecast = $args['include_forecast'] ?? true;
+            $forecastDays = $args['forecast_days'] ?? 3;
+
+            if (!$location) {
+                throw new Exception('Location is required for weather data');
+            }
+
+            // Get weather data from WeatherService
+            $weatherData = $this->weatherService->getWeatherData($location, $includeForecast, $forecastDays);
+
+            return [
+                'success' => true,
+                'data' => $weatherData,
+                'function_name' => 'get_weather_data',
+                'executed_at' => now()->toISOString(),
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Weather Function Error: ' . $e->getMessage(), [
+                'function_call' => $functionCall,
+                'error' => $e->getTrace()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'function_name' => 'get_weather_data',
+                'executed_at' => now()->toISOString(),
+            ];
+        }
+    }
+
+    /**
+     * Generate response with function call handling
+     */
+    public function generateResponseWithFunctions(
+        string $userMessage,
+        array $conversationHistory = []
+    ): array {
+        // First, generate response with function calling enabled
+        $response = $this->generateResponse($userMessage, $conversationHistory, true);
+
+        if (!$response['success'] || !$response['function_call']) {
+            return $response;
+        }
+
+        // Execute the function call
+        $functionResult = $this->executeFunctionCall($response['function_call']);
+        
+        // Create a follow-up message with function result
+        $functionResultMessage = [
+            'role' => 'function',
+            'name' => $response['function_call']['name'],
+            'content' => json_encode($functionResult['data'] ?? $functionResult)
+        ];
+
+        // Add function result to conversation history
+        $updatedHistory = array_merge($conversationHistory, [
+            ['role' => Message::ROLE_USER, 'content' => $userMessage],
+            ['role' => 'function', 'content' => json_encode($functionResult)]
+        ]);
+
+        // Generate final response with the function result
+        $finalResponse = $this->generateResponse(
+            'Por favor, interpreta y presenta estos datos meteorológicos de manera conversacional y útil.',
+            $updatedHistory,
+            false // Don't include function calling in the final response
+        );
+
+        // Combine responses
+        return [
+            'success' => $finalResponse['success'],
+            'content' => $finalResponse['content'],
+            'function_call' => $response['function_call'],
+            'function_result' => $functionResult,
+            'processing_time' => $response['processing_time'] + $finalResponse['processing_time'],
+            'tokens_used' => $response['tokens_used'] + $finalResponse['tokens_used'],
+            'weather_data' => $functionResult['data'] ?? null,
+        ];
+    }
+
+    /**
+     * Generate weather response using real weather data without function calling
+     */
+    public function generateWeatherResponseSimple(string $userMessage): string
+    {
+        try {
+            // Extract location from user message (simple pattern matching)
+            $location = $this->extractLocationFromMessage($userMessage);
+            
+            if (!$location) {
+                return "Para poder ayudarte con el clima, ¿podrías decirme de qué ciudad quieres saber el clima?";
+            }
+
+            // Get real weather data
+            $weatherData = $this->weatherService->getCurrentWeather($location);
+            
+            if (!$weatherData) {
+                return "Lo siento, no pude obtener datos del clima para {$location}. ¿Podrías verificar el nombre de la ciudad?";
+            }
+
+            // Create a detailed prompt with the real weather data
+            $weatherContext = $this->formatWeatherDataForPrompt($weatherData);
+            
+            $prompt = "Usuario pregunta: {$userMessage}\n\n" .
+                     "Datos meteorológicos reales actuales:\n{$weatherContext}\n\n" .
+                     "Por favor, proporciona una respuesta natural y conversacional sobre el clima usando estos datos reales. " .
+                     "Incluye temperatura, descripción del clima, sensación térmica, humedad, y cualquier otro dato relevante de manera amigable.";
+
+            $response = $this->generateResponse($prompt, [], false);
+            
+            return $response['content'] ?? 'Lo siento, no pude generar una respuesta sobre el clima.';
+            
+        } catch (Exception $e) {
+            Log::error('Weather response generation error: ' . $e->getMessage());
+            return 'Lo siento, tuve un problema al obtener la información del clima. ¿Puedes intentar de nuevo?';
+        }
+    }
+
+    /**
+     * Extract location from user message
+     */
+    private function extractLocationFromMessage(string $message): ?string
+    {
+        // Simple pattern matching for common city names
+        $cities = [
+            'madrid' => 'Madrid',
+            'barcelona' => 'Barcelona', 
+            'valencia' => 'Valencia',
+            'sevilla' => 'Sevilla',
+            'bilbao' => 'Bilbao',
+            'málaga' => 'Málaga',
+            'murcia' => 'Murcia',
+            'palma' => 'Palma',
+            'las palmas' => 'Las Palmas',
+            'valladolid' => 'Valladolid'
+        ];
+
+        $messageLower = strtolower($message);
+        
+        foreach ($cities as $key => $city) {
+            if (strpos($messageLower, $key) !== false) {
+                return $city;
+            }
+        }
+
+        // Try to extract using regex patterns
+        if (preg_match('/en\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+)/u', $message, $matches)) {
+            return trim($matches[1]);
+        }
+
+        if (preg_match('/de\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]+)/u', $message, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Format weather data for prompt
+     */
+    private function formatWeatherDataForPrompt(array $weatherData): string
+    {
+        return sprintf(
+            "Ubicación: %s, %s\n" .
+            "Temperatura actual: %.1f°C\n" .
+            "Sensación térmica: %.1f°C\n" .
+            "Descripción: %s\n" .
+            "Humedad: %d%%\n" .
+            "Presión: %.1f hPa\n" .
+            "Viento: %.1f km/h, dirección %d°\n" .
+            "Es de día: %s\n" .
+            "Coordenadas: %.4f, %.4f",
+            $weatherData['location'],
+            $weatherData['country'],
+            $weatherData['temperature'],
+            $weatherData['feels_like'],
+            $weatherData['description'],
+            $weatherData['humidity'],
+            $weatherData['pressure'],
+            $weatherData['wind_speed'],
+            $weatherData['wind_direction'],
+            $weatherData['is_day'] ? 'Sí' : 'No',
+            $weatherData['coordinates']['latitude'],
+            $weatherData['coordinates']['longitude']
+        );
     }
 }

@@ -14,7 +14,7 @@ class AIServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AIService::class, function ($app) {
-            return new AIService();
+            return new AIService($app->make(\App\Services\WeatherService::class));
         });
 
         // Bind interface if needed in the future

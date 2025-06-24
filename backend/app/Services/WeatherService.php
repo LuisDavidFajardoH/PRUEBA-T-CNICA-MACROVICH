@@ -140,12 +140,12 @@ class WeatherService
                     'latitude' => $locationData['latitude'] ?? 0,
                     'longitude' => $locationData['longitude'] ?? 0
                 ],
-                'temperature' => round($current['temperature_2m'] ?? 0, 1),
+                'temperature' => round($current['temperature'] ?? 0, 1),
                 'feels_like' => round($current['apparent_temperature'] ?? 0, 1),
-                'humidity' => $current['relative_humidity_2m'] ?? 0,
-                'pressure' => $current['surface_pressure'] ?? 0,
-                'wind_speed' => round($current['wind_speed_10m'] ?? 0, 1),
-                'wind_direction' => $current['wind_direction_10m'] ?? 0,
+                'humidity' => $current['humidity'] ?? 0,
+                'pressure' => $current['pressure'] ?? 0,
+                'wind_speed' => round($current['wind_speed'] ?? 0, 1),
+                'wind_direction' => $current['wind_direction'] ?? 0,
                 'visibility' => $current['visibility'] ?? 0,
                 'uv_index' => $current['uv_index'] ?? 0,
                 'weather_code' => $current['weather_code'] ?? 0,
@@ -273,7 +273,6 @@ class WeatherService
             $params = [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
-                'current_weather' => 'true',
                 'timezone' => 'auto',
                 'current' => [
                     'temperature_2m',
