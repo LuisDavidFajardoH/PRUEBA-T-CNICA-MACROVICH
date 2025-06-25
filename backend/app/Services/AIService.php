@@ -22,7 +22,7 @@ class AIService
     {
         $this->weatherService = $weatherService;
         $this->apiKey = config('services.gemini.api_key');
-        $this->model = config('services.gemini.model', 'gemini-1.5-flash');
+        $this->model = config('services.gemini.model', 'gemini-2.0-flash-exp');
         $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
         
         if (empty($this->apiKey)) {
@@ -677,9 +677,15 @@ SEGURIDAD:
             // Parse the AI analysis
             $analysisContent = trim($analysisResponse['content']);
             
-            // Extract JSON from the response
-            if (preg_match('/\{[^}]+\}/', $analysisContent, $matches)) {
+            // Extract JSON from the response - handle markdown wrapped JSON
+            $jsonStr = null;
+            if (preg_match('/```json\s*(\{.*?\})\s*```/s', $analysisContent, $matches)) {
+                $jsonStr = $matches[1];
+            } elseif (preg_match('/\{.*?\}/s', $analysisContent, $matches)) {
                 $jsonStr = $matches[0];
+            }
+            
+            if ($jsonStr) {
                 $analysis = json_decode($jsonStr, true);
                 
                 if (!$analysis) {
@@ -790,8 +796,8 @@ SEGURIDAD:
                 "Presión: %.1f hPa\n\n",
                 $weatherData['location'] ?? 'N/A',
                 $current['temperature'] ?? 0,
-                $current['feels_like'] ?? 0,
-                $current['description'] ?? 'N/A',
+                $current['apparent_temperature'] ?? 0,
+                $current['weather_description'] ?? 'N/A',
                 $current['humidity'] ?? 0,
                 $current['wind_speed'] ?? 0,
                 $current['pressure'] ?? 0
@@ -806,10 +812,10 @@ SEGURIDAD:
                 $formatted .= sprintf(
                     "%s: %s | Máx: %.1f°C | Mín: %.1f°C | Lluvia: %.1fmm\n",
                     $dayName,
-                    $day['description'] ?? 'N/A',
+                    $day['weather_description'] ?? 'N/A',
                     $day['temperature_max'] ?? 0,
                     $day['temperature_min'] ?? 0,
-                    $day['precipitation'] ?? 0
+                    $day['precipitation_sum'] ?? 0
                 );
             }
             $formatted .= "\n";
@@ -828,7 +834,7 @@ SEGURIDAD:
                     "%s: %.1f°C | %s | Lluvia: %.1fmm\n",
                     date('H:i', strtotime($hour['time'])),
                     $hour['temperature'] ?? 0,
-                    $hour['description'] ?? 'N/A',
+                    $hour['weather_description'] ?? 'N/A',
                     $hour['precipitation'] ?? 0
                 );
             }
