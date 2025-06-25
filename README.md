@@ -2,6 +2,34 @@
 
 Un chatbot meteorológico fullstack completamente funcional que combina Laravel 12 y Vue.js 3 para ofrecer consultas climáticas inteligentes. El sistema integra **Gemini 2.0 Flash** con datos meteorológicos en tiempo real de **Open-Meteo API**, proporcionando respuestas conversacionales precisas y actualizadas.
 
+## 📋 **Tabla de Contenidos**
+
+- [🚀 Instalación Paso a Paso](#-guía-de-instalación-paso-a-paso)
+- [📱 Cómo Usar el Sistema](#-cómo-usar-el-sistema)
+- [🧪 Testing y Verificación](#-verificación-y-testing)
+- [❓ Preguntas Frecuentes](#-preguntas-frecuentes-faq)
+- [🔒 Configuración de Producción](#-configuración-de-producción)
+- [📊 Arquitectura Técnica](#-arquitectura-y-estructura-técnica)
+- [📡 API Endpoints](#-api-endpoints)
+
+## ⚡ **INICIO RÁPIDO PARA EVALUADORES**
+
+```bash
+# 1. Clonar e instalar
+git clone <repository-url>
+cd PRUEBA-T-CNICA-MACROVICH
+./install.sh
+
+# 2. Iniciar aplicación
+./start.sh
+
+# 3. Acceder
+# Frontend: http://localhost:5173
+# Login: demo@weatherbot.com / password123
+```
+
+**⏱️ Tiempo estimado de configuración: 5-10 minutos**
+
 ## ✅ **SISTEMA COMPLETAMENTE OPERATIVO**
 
 El chatbot meteorológico está **100% funcional** y puede responder consultas como:
@@ -153,7 +181,7 @@ El sistema está completamente operativo. Ejemplos de consultas reales procesada
    - Frontend Vue.js (puerto 5173) ✅ EJECUTÁNDOSE  
    - APIs externas ✅ CONECTADAS Y FUNCIONALES
 
-### 🎯 **Comando de Validación Personalizado**
+### 🎯 **Comando de Validación Personalizado
 
 ```bash
 # Ejecutar validación completa del sistema
@@ -199,66 +227,208 @@ GET    /api/chat/messages/search       # Buscar mensajes
 GET    /api/chat/messages/recent       # Mensajes recientes
 ```
 
-## 🚀 **GUÍA DE INSTALACIÓN Y USO**
+## 🚀 **GUÍA DE INSTALACIÓN PASO A PASO**
 
-### 🔧 **Prerrequisitos**
-- PHP 8.3+ ✅
-- Composer ✅
-- MySQL 9.3+ ✅
-- Redis 8.0+ ✅
-- Node.js 18+ ✅ (para frontend)
-
-### ⚡ **Instalación Rápida**
-
-#### 1. **Backend (Laravel)**
+### ⚡ **Instalación Automática (Recomendada)**
 
 ```bash
-# Clonar repositorio
+# Clonar el repositorio
 git clone <repository-url>
-cd PRUEBA-T-CNICA-MACROVICH/backend
+cd PRUEBA-T-CNICA-MACROVICH
 
-# Instalar dependencias
+# Ejecutar script de instalación automática
+chmod +x install.sh
+./install.sh
+```
+
+El script automático:
+- ✅ Verifica todos los prerrequisitos
+- ✅ Instala dependencias de backend y frontend
+- ✅ Configura la base de datos
+- ✅ Te guía para obtener la clave de Gemini API
+- ✅ Ejecuta migraciones y crea usuario demo
+- ✅ Verifica que todo funcione correctamente
+
+### 🔧 **Instalación Manual (Paso a Paso)**
+
+Si prefieres instalación manual o el script automático falla:
+
+### 🔧 **Prerrequisitos del Sistema**
+
+Antes de comenzar, asegúrate de tener instalado:
+- **PHP 8.3+** (con extensiones: mbstring, zip, xml, curl, mysql, gd)
+- **Composer** (gestor de dependencias PHP)
+- **MySQL 8.0+** o **MariaDB 10.4+**
+- **Node.js 18+** y **npm** (para el frontend)
+- **Git** (control de versiones)
+
+### ⚡ **Instalación Completa**
+
+#### 1. **Clonar el Repositorio**
+
+```bash
+git clone <repository-url>
+cd PRUEBA-T-CNICA-MACROVICH
+```
+
+#### 2. **Configurar Backend (Laravel)**
+
+```bash
+# Navegar al directorio backend
+cd backend
+
+# Instalar dependencias PHP
 composer install
 
-# Configurar entorno
+# Crear archivo de configuración
 cp .env.example .env
+
+# Generar clave de aplicación
 php artisan key:generate
-
-# Configurar base de datos
-mysql -u root -p -e "CREATE DATABASE weather_chatbot;"
-php artisan migrate
-
-# Iniciar servidor
-php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-#### 2. **Frontend (Vue.js)**
+#### 3. **Configurar Base de Datos**
 
 ```bash
-cd ../frontend
-npm install
-npm run dev
+# Crear base de datos (ajusta credenciales según tu configuración)
+mysql -u root -p -e "CREATE DATABASE weather_chatbot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# O si usas un usuario específico:
+mysql -u tu_usuario -p -e "CREATE DATABASE weather_chatbot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-#### 3. **Variables de Entorno Críticas**
+#### 4. **Configurar Variables de Entorno**
+
+Edita el archivo `backend/.env` con tu configuración:
 
 ```env
-# APIs externas (REQUERIDO)
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-2.0-flash-exp
+# Configuración de la aplicación
+APP_NAME="Weather Chatbot"
+APP_ENV=local
+APP_DEBUG=true
+APP_TIMEZONE=UTC
+APP_URL=http://localhost:8000
 
-# Base de datos
+# Base de datos - AJUSTAR SEGÚN TU CONFIGURACIÓN
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
 DB_DATABASE=weather_chatbot
 DB_USERNAME=root
-DB_PASSWORD=
+DB_PASSWORD=tu_password_aqui
 
-# URLs de servicios meteorológicos
+# API de Gemini (OBLIGATORIO - Obtener en https://makersuite.google.com/app/apikey)
+GEMINI_API_KEY=tu_clave_gemini_aqui
+GEMINI_MODEL=gemini-2.0-flash-exp
+
+# APIs meteorológicas (YA CONFIGURADAS - NO CAMBIAR)
 OPENMETEO_BASE_URL=https://api.open-meteo.com/v1
 GEOCODING_BASE_URL=https://geocoding-api.open-meteo.com/v1
 
 # Frontend
 FRONTEND_URL=http://localhost:5173
+
+# Cache (opcional - mejora rendimiento)
+CACHE_STORE=file
+WEATHER_CACHE_TTL=900
+GEOCODING_CACHE_TTL=86400
+
+# Rate limiting
+API_RATE_LIMIT=60
+CHAT_RATE_LIMIT=30
+WEATHER_RATE_LIMIT=120
 ```
+
+#### 5. **Ejecutar Migraciones y Sembrar Datos**
+
+```bash
+# Ejecutar migraciones de base de datos
+php artisan migrate
+
+# Crear usuario demo (opcional)
+php artisan db:seed --class=DemoUserSeeder
+
+# Verificar configuración
+php artisan config:cache
+```
+
+#### 6. **Configurar Frontend (Vue.js)**
+
+```bash
+# Navegar al directorio frontend
+cd ../frontend
+
+# Instalar dependencias Node.js
+npm install
+
+# Crear archivo de configuración del frontend
+cp .env.example .env
+```
+
+Edita el archivo `frontend/.env`:
+
+```env
+# URL del backend
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_APP_NAME="Weather Chatbot"
+```
+
+#### 7. **Iniciar los Servicios**
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+### 🎯 **Inicio Rápido de la Aplicación**
+
+Una vez instalado, puedes iniciar ambos servicios con un solo comando:
+
+```bash
+# Ejecutar backend y frontend simultáneamente
+./start.sh
+```
+
+**O manualmente en terminales separadas:**
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+### 🌐 **Acceso a la Aplicación**
+
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8000/api
+- **Health Check**: http://localhost:8000/api/health
+
+### 👤 **Usuario Demo**
+
+Si ejecutaste el seeder, puedes usar estas credenciales:
+- **Email**: demo@weatherbot.com
+- **Password**: password123
+
+### 🔑 **Obtener Clave de Gemini API**
+
+1. Ve a [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Inicia sesión con tu cuenta de Google
+3. Haz clic en "Create API Key"
+4. Copia la clave generada
+5. Pégala en `GEMINI_API_KEY` en tu archivo `.env`
 
 ### 🎯 **Uso del Sistema**
 
@@ -269,17 +439,146 @@ FRONTEND_URL=http://localhost:5173
    - *"¿Lloverá mañana en Barcelona?"*
 3. **Ver respuestas inteligentes** con datos reales y recomendaciones
 
-### 🧪 **Testing y Validación**
+### 📱 **Cómo Usar el Sistema**
+
+#### 1. **Registro/Login**
+- Accede a http://localhost:5173
+- Crea una cuenta nueva o usa las credenciales demo
+- El sistema te redirigirá al chat principal
+
+#### 2. **Hacer Consultas Meteorológicas**
+
+**Ejemplos de consultas que puedes hacer:**
+
+```
+✅ Consultas Simples:
+"¿Cómo está el clima en Madrid?"
+"Temperatura en Barcelona"
+"Clima actual en Bogotá"
+
+✅ Pronósticos:
+"Pronóstico de Londres para mañana"
+"¿Cómo estará el tiempo en París los próximos 3 días?"
+"¿Lloverá en México DF este fin de semana?"
+
+✅ Consultas Específicas:
+"¿Necesito paraguas en Berlín mañana?"
+"¿Qué ropa me recomiendas para Nueva York hoy?"
+"¿Está lloviendo ahora en Tokyo?"
+```
+
+#### 3. **Navegación del Chat**
+- **Sidebar izquierdo**: Historial de conversaciones anteriores
+- **Área central**: Chat actual con mensajes
+- **Input inferior**: Escribe tu consulta meteorológica
+- **Botón "+"**: Crear nueva conversación
+
+#### 4. **Funciones Avanzadas**
+- **Historial**: Todas las conversaciones se guardan automáticamente
+- **Contexto**: El sistema recuerda el contexto de la conversación
+- **Respuestas inteligentes**: Obtén recomendaciones prácticas basadas en el clima
+
+### 🌟 **Características del Sistema**
+
+#### Respuestas Inteligentes
+El sistema no solo te da datos, sino que:
+- 🌡️ Interpreta las temperaturas en contexto
+- ☔ Te avisa si necesitas paraguas
+- 👕 Sugiere qué ropa usar
+- 🌬️ Explica las condiciones de viento
+- 📊 Presenta la información de forma fácil de entender
+
+#### Datos Precisos
+- ✅ **Información actual**: Datos actualizados cada 15 minutos
+- ✅ **Pronósticos confiables**: Hasta 7 días con detalles horarios
+- ✅ **Cobertura global**: Funciona para ciudades de todo el mundo
+- ✅ **Múltiples métricas**: Temperatura, humedad, viento, precipitación
+
+### 🧪 **Verificación y Testing**
+
+#### Verificar Configuración
 
 ```bash
-# Ejecutar todos los tests
-php artisan test
+# Desde el directorio backend
+cd backend
 
-# Validación específica del sistema meteorológico
+# Verificar conectividad con Gemini AI
 php artisan test:gemini
 
-# Limpiar caché si es necesario
-php artisan cache:clear
+# Ejecutar health check completo
+curl http://localhost:8000/api/health
+
+# Verificar base de datos
+php artisan migrate:status
+```
+
+#### Ejecutar Tests
+
+```bash
+# Tests unitarios y de integración
+php artisan test
+
+# Tests específicos del servicio meteorológico
+php artisan test --filter=WeatherServiceTest
+
+# Tests del servicio de IA
+php artisan test --filter=AIServiceTest
+```
+
+### ❗ **Solución de Problemas Comunes**
+
+#### Error: "GEMINI_API_KEY no configurada"
+- Asegúrate de haber obtenido una clave válida de Google AI Studio
+- Verifica que esté correctamente en el archivo `.env`
+- No debe tener espacios ni comillas adicionales
+
+#### Error de Conexión a Base de Datos
+```bash
+# Verificar que MySQL esté ejecutándose
+sudo systemctl status mysql  # Linux
+brew services list | grep mysql  # macOS
+
+# Verificar credenciales en .env
+php artisan tinker
+DB::connection()->getPdo();  # Debe conectar sin errores
+```
+
+#### Error "npm run dev" falla
+```bash
+# Limpiar cache de npm
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+#### Puerto ya en uso
+```bash
+# Cambiar puerto del backend
+php artisan serve --port=8001
+
+# Cambiar puerto del frontend
+npm run dev -- --port=5174
+```
+
+### 🔧 **Comandos Útiles para Desarrollo**
+
+```bash
+# Backend
+php artisan cache:clear      # Limpiar cache
+php artisan config:clear     # Limpiar config cache
+php artisan route:list       # Ver todas las rutas
+php artisan queue:work       # Procesar colas (si usas)
+
+# Frontend
+npm run build               # Compilar para producción
+npm run preview            # Vista previa de build
+npm run type-check         # Verificar tipos TypeScript
+
+# Base de datos
+php artisan migrate:fresh   # Recrear todas las tablas
+php artisan db:seed        # Ejecutar seeders
+php artisan tinker         # Consola interactiva
 ```
 
 ## 📊 **ARQUITECTURA Y ESTRUCTURA TÉCNICA**
@@ -414,3 +713,90 @@ Este proyecto es parte de una prueba técnica para Macrovich.
 ---
 
 **Desarrollado con ❤️ usando Laravel 12 + Vue.js 3**
+
+## ❓ **Preguntas Frecuentes (FAQ)**
+
+### **🔑 Configuración**
+
+**P: ¿Dónde obtengo la clave de Gemini API?**
+R: Ve a [Google AI Studio](https://makersuite.google.com/app/apikey), inicia sesión y crea una nueva clave API. Es gratuita con límites generosos.
+
+**P: ¿Puedo usar PostgreSQL en lugar de MySQL?**
+R: Sí, cambia `DB_CONNECTION=pgsql` en el `.env` y ajusta las credenciales correspondientes.
+
+**P: ¿El sistema funciona sin Redis?**
+R: Sí, usa cache de archivos por defecto. Redis mejora el rendimiento pero no es obligatorio.
+
+### **🐛 Problemas Técnicos**
+
+**P: Error "Class 'PDO' not found"**
+R: Instala la extensión PHP PDO: `sudo apt-get install php-mysql` (Ubuntu) o verifica que esté habilitada en php.ini
+
+**P: "CORS policy" en el navegador**
+R: Verifica que `FRONTEND_URL=http://localhost:5173` esté en backend/.env y que ambos servidores estén ejecutándose.
+
+**P: Las consultas meteorológicas no funcionan**
+R: Ejecuta `php artisan test:gemini` para verificar la configuración de Gemini API.
+
+### **🔧 Desarrollo**
+
+**P: ¿Cómo agregar nuevas ciudades o países?**
+R: El sistema usa geocoding automático. No necesitas configurar ciudades manualmente.
+
+**P: ¿Cómo cambiar el tiempo de cache?**
+R: Modifica `WEATHER_CACHE_TTL=900` (segundos) en el archivo `.env`.
+
+**P: ¿Cómo personalizar las respuestas de la IA?**
+R: Edita los prompts en `app/Services/AIService.php` en el método `generateResponse()`.
+
+### **📊 Rendimiento**
+
+**P: ¿Por qué algunas respuestas tardan más?**
+R: La primera consulta de una ciudad nueva requiere geocoding. Las siguientes usan cache y son más rápidas.
+
+**P: ¿Cuántas consultas puedo hacer?**
+R: Rate limit por defecto: 60 consultas/minuto generales, 30/minuto para chat, 120/minuto para weather.
+
+## 🔒 **Configuración de Producción**
+
+### Variables de Entorno para Producción
+
+```env
+# Seguridad
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=base64:tu_clave_generada_aqui
+
+# Base de datos optimizada
+DB_CONNECTION=mysql
+DB_HOST=tu_servidor_db
+DB_DATABASE=weather_chatbot_prod
+DB_USERNAME=usuario_prod
+DB_PASSWORD=password_seguro
+
+# Cache para mejor rendimiento
+CACHE_STORE=redis
+REDIS_HOST=tu_servidor_redis
+REDIS_PASSWORD=password_redis
+
+# Logging
+LOG_CHANNEL=daily
+LOG_LEVEL=warning
+
+# Rate limiting más estricto
+API_RATE_LIMIT=100
+CHAT_RATE_LIMIT=50
+```
+
+### Comandos de Deployment
+
+```bash
+# Optimizar para producción
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+composer install --optimize-autoloader --no-dev
+
+# Frontend
+npm run build
+```
