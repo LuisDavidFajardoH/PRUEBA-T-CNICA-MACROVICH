@@ -99,108 +99,172 @@ defineEmits<{
 
 <style scoped>
 .chat-sidebar {
-  width: 320px;
-  background: white;
-  border-right: 1px solid #e2e8f0;
+  width: 260px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  margin: 0.5rem 0 0.5rem 0.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 .sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .app-branding {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .app-branding i {
-  font-size: 1.5rem;
-  color: #3b82f6;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(79, 70, 229, 0.2));
 }
 
 .app-info h3 {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1f2937, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .app-info span {
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .new-chat-btn {
-  color: #64748b;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .new-chat-btn:hover {
-  background-color: #f1f5f9;
-  color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
 }
 
 .conversations-container {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.conversations-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversations-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.conversations-container::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.3);
+  border-radius: 3px;
+}
+
+.conversations-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.5);
 }
 
 .empty-state {
   text-align: center;
-  padding: 2rem;
-  color: #64748b;
+  padding: 1.5rem;
+  color: #6b7280;
 }
 
 .empty-state i {
   font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #cbd5e1;
+  margin-bottom: 0.8rem;
+  background: linear-gradient(135deg, #cbd5e1, #9ca3af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .empty-state p {
-  margin: 0.5rem 0;
-  font-weight: 500;
+  margin: 0.4rem 0;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
 }
 
 .empty-state small {
-  color: #94a3b8;
+  color: #9ca3af;
+  font-weight: 500;
+  font-size: 0.75rem;
 }
 
 .conversations-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .sidebar-footer {
-  border-top: 1px solid #e2e8f0;
-  padding: 1rem;
-  background: #f8fafc;
+  border-top: 1px solid rgba(79, 70, 229, 0.1);
+  padding: 0.6rem;
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  padding: 0.3rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.user-info:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar {
-  width: 2rem;
-  height: 2rem;
-  background: #e2e8f0;
+  width: 1.7rem;
+  height: 1.7rem;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
-  font-size: 0.875rem;
+  color: white;
+  font-size: 0.7rem;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .user-details {
@@ -209,35 +273,46 @@ defineEmits<{
 }
 
 .user-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1f2937;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .user-email {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.7rem;
+  color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 .logout-btn {
-  color: #64748b;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
+  transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
-  background-color: #e2e8f0;
-  color: #dc2626;
+  background: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 @media (max-width: 768px) {
   .chat-sidebar {
-    width: 280px;
+    width: 260px;
+    margin: 0.5rem;
+    border-radius: 20px;
   }
   
   .sidebar-header {
@@ -250,6 +325,14 @@ defineEmits<{
   
   .sidebar-footer {
     padding: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-sidebar {
+    width: 280px;
+    margin: 0.25rem;
+    border-radius: 16px;
   }
 }
 </style>
