@@ -83,7 +83,7 @@ El chatbot meteorológico está **100% funcional** y puede responder consultas c
 
 #### Vue.js 3 + TypeScript - IMPLEMENTADO Y OPERATIVO
 - ✅ **Componentes de Chat**: Sistema completo de mensajería en tiempo real
-- ✅ **Interfaz de Usuario**: UI moderna y responsiva con Tailwind CSS
+- ✅ **Interfaz de Usuario**: UI moderna y responsiva con CSS
 - ✅ **Integración con API**: Conexión estable con backend Laravel
 - ✅ **Estado Global (Pinia)**: Manejo centralizado del estado de la aplicación
 - ✅ **Componentes Especializados**:
