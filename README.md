@@ -711,3 +711,19 @@ composer install --optimize-autoloader --no-dev
 # Frontend
 npm run build
 ```
+
+
+## 📚 **Créditos y Reconocimientos**
+
+Este proyecto fue desarrollado como parte de una prueba técnica para **Macrovich**.
+
+**Documentación**: Esta documentación detallada fue creada con la asistencia de **Claude Sonnet 3.5** para asegurar claridad, completitud y facilidad de instalación para los evaluadores.
+
+**Tecnologías utilizadas**:
+- Backend: Laravel 12 + PHP 8.3 + MySQL + Gemini 2.0 Flash
+- Frontend: Vue.js 3 + TypeScript + Vite
+- APIs: Open-Meteo (datos meteorológicos) + Google Geocoding
+
+---
+
+**Desarrollado con ❤️ usando Laravel 12 + Vue.js 3**
