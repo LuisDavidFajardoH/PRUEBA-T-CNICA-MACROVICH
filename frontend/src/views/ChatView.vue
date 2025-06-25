@@ -3,7 +3,7 @@
     <ChatLayout>
       <template #sidebar>
         <ChatSidebar
-          :conversations="chatStore.conversations"
+          :conversations="chatStore.conversations?.map(conv => ({...conv, id: conv.id.toString()}))"
           :currentConversationId="chatStore.currentConversation?.id?.toString() || null"
           :user="authStore.user"
           appName="WeatherBot"

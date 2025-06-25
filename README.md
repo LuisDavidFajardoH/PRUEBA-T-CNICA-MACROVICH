@@ -4,7 +4,11 @@ Un chatbot meteorológico fullstack completamente funcional que combina Laravel 
 
 ## 📋 **Tabla de Contenidos**
 
+- [⚡ Inicio Rápido (Linux/macOS/Windows)](#-inicio-rápido-para-evaluadores)
 - [🚀 Instalación Paso a Paso](#-guía-de-instalación-paso-a-paso)
+  - [🖥️ Instalación Automática (Linux/macOS)](#️-para-linuxmacos)
+  - [🪟 Instalación en Windows](#️-para-windows)
+  - [🔧 Instalación Manual](#-instalación-manual-paso-a-paso)
 - [📱 Cómo Usar el Sistema](#-cómo-usar-el-sistema)
 - [🧪 Testing y Verificación](#-verificación-y-testing)
 - [❓ Preguntas Frecuentes](#-preguntas-frecuentes-faq)
@@ -14,6 +18,7 @@ Un chatbot meteorológico fullstack completamente funcional que combina Laravel 
 
 ## ⚡ **INICIO RÁPIDO PARA EVALUADORES**
 
+### 🖥️ **Linux/macOS:**
 ```bash
 # 1. Clonar e instalar
 git clone <repository-url>
@@ -28,7 +33,23 @@ cd PRUEBA-T-CNICA-MACROVICH
 # Login: demo@weatherbot.com / password123
 ```
 
+### 🪟 **Windows:**
+```bash
+# 1. Abrir Git Bash (incluido con Git for Windows)
+git clone <repository-url>
+cd PRUEBA-T-CNICA-MACROVICH
+./install.sh
+
+# 2. Iniciar aplicación
+./start.sh
+
+# 3. Acceder
+# Frontend: http://localhost:5173
+# Login: demo@weatherbot.com / password123
+```
+
 **⏱️ Tiempo estimado de configuración: 5-10 minutos**
+**💡 Prerrequisitos Windows: Git, PHP 8.3+, Composer, Node.js 18+, MySQL**
 
 ## ✅ **SISTEMA COMPLETAMENTE OPERATIVO**
 
@@ -231,6 +252,8 @@ GET    /api/chat/messages/recent       # Mensajes recientes
 
 ### ⚡ **Instalación Automática (Recomendada)**
 
+#### 🖥️ **Para Linux/macOS:**
+
 ```bash
 # Clonar el repositorio
 git clone <repository-url>
@@ -241,7 +264,42 @@ chmod +x install.sh
 ./install.sh
 ```
 
-El script automático:
+#### 🪟 **Para Windows:**
+
+**Opción 1: Git Bash (Recomendada)**
+```bash
+# Instalar Git for Windows (incluye Git Bash): https://git-scm.com/download/win
+# Abrir Git Bash y ejecutar:
+git clone <repository-url>
+cd PRUEBA-T-CNICA-MACROVICH
+./install.sh
+```
+
+**Opción 2: WSL (Windows Subsystem for Linux)**
+```bash
+# Instalar WSL: https://docs.microsoft.com/en-us/windows/wsl/install
+# Abrir terminal WSL y ejecutar:
+git clone <repository-url>
+cd PRUEBA-T-CNICA-MACROVICH
+chmod +x install.sh
+./install.sh
+```
+
+**Opción 3: PowerShell (Instalación Manual)**
+```powershell
+# Si no puedes usar bash, sigue la instalación manual más abajo
+```
+
+#### 📋 **Prerrequisitos para Windows:**
+
+**Antes de usar el script automático, instala:**
+- **Git for Windows**: [git-scm.com/download/win](https://git-scm.com/download/win)
+- **PHP 8.3+**: [windows.php.net/download](https://windows.php.net/download/) o usando [XAMPP](https://www.apachefriends.org/)
+- **Composer**: [getcomposer.org/download](https://getcomposer.org/download/)
+- **Node.js 18+**: [nodejs.org/en/download](https://nodejs.org/en/download/)
+- **MySQL**: [dev.mysql.com/downloads/installer](https://dev.mysql.com/downloads/installer/) o usando XAMPP/WAMP
+
+#### ✅ **Lo que hace el script automático:**
 - ✅ Verifica todos los prerrequisitos
 - ✅ Instala dependencias de backend y frontend
 - ✅ Configura la base de datos
@@ -527,12 +585,14 @@ php artisan test --filter=AIServiceTest
 
 ### ❗ **Solución de Problemas Comunes**
 
-#### Error: "GEMINI_API_KEY no configurada"
+#### 🖥️ **Problemas Específicos de Linux/macOS**
+
+**Error: "GEMINI_API_KEY no configurada"**
 - Asegúrate de haber obtenido una clave válida de Google AI Studio
 - Verifica que esté correctamente en el archivo `.env`
 - No debe tener espacios ni comillas adicionales
 
-#### Error de Conexión a Base de Datos
+**Error de Conexión a Base de Datos**
 ```bash
 # Verificar que MySQL esté ejecutándose
 sudo systemctl status mysql  # Linux
@@ -543,22 +603,80 @@ php artisan tinker
 DB::connection()->getPdo();  # Debe conectar sin errores
 ```
 
-#### Error "npm run dev" falla
+#### 🪟 **Problemas Específicos de Windows**
+
+**Error: "bash: ./install.sh: No such file or directory"**
+```powershell
+# Solución 1: Usar Git Bash en lugar de PowerShell
+# Abre Git Bash desde el menú inicio y ejecuta el script
+
+# Solución 2: Si usas PowerShell, convierte line endings
+git config --global core.autocrlf false
+git clone <repository-url>
+cd PRUEBA-T-CNICA-MACROVICH
+```
+
+**Error: "php no es reconocido como comando"**
+```powershell
+# Agregar PHP al PATH de Windows
+# 1. Busca "Variables de entorno" en el menú inicio
+# 2. Edita las variables de entorno del sistema
+# 3. Agrega la ruta de PHP (ej: C:\php) a la variable PATH
+# 4. Reinicia PowerShell/Git Bash
+
+# O usar XAMPP:
+C:\xampp\php\php.exe -v
+```
+
+**Error: "composer no es reconocido como comando"**
+```powershell
+# Descargar e instalar Composer desde:
+# https://getcomposer.org/Composer-Setup.exe
+# Seguir el instalador y reiniciar terminal
+```
+
+**Error: "mysql no es reconocido como comando"**
+```powershell
+# Opción 1: Agregar MySQL al PATH
+# Agrega C:\Program Files\MySQL\MySQL Server 8.0\bin al PATH
+
+# Opción 2: Usar XAMPP/WAMP
+# Inicia XAMPP Control Panel y activa MySQL
+
+# Opción 3: Usar ruta completa
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+```
+
+**Error: Puerto ocupado en Windows**
+```powershell
+# Ver qué está usando el puerto
+netstat -ano | findstr :8000
+netstat -ano | findstr :5173
+
+# Terminar proceso si es necesario
+taskkill /PID [número_de_PID] /F
+
+# O cambiar puertos
+php artisan serve --port=8001
+npm run dev -- --port=5174
+```
+
+**Permisos de archivos en Windows**
+```powershell
+# Si hay problemas de permisos, ejecutar como Administrador
+# Clic derecho en Git Bash/PowerShell -> "Ejecutar como administrador"
+```
+
+#### 🌐 **Problemas Generales (Todas las Plataformas)**
+
+**Error "npm run dev" falla**
 ```bash
 # Limpiar cache de npm
 cd frontend
-rm -rf node_modules package-lock.json
+rm -rf node_modules package-lock.json  # Linux/macOS
+# En Windows: rmdir /s node_modules && del package-lock.json
 npm install
 npm run dev
-```
-
-#### Puerto ya en uso
-```bash
-# Cambiar puerto del backend
-php artisan serve --port=8001
-
-# Cambiar puerto del frontend
-npm run dev -- --port=5174
 ```
 
 ### 🔧 **Comandos Útiles para Desarrollo**
