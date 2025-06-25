@@ -151,18 +151,40 @@
   background: rgba(79, 70, 229, 0.5);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .chat-layout {
-    flex-direction: column;
+    padding: 0.25rem;
   }
   
   .chat-main {
-    border-radius: 20px;
-    margin: 0.5rem;
+    margin: 0.25rem;
   }
   
   .messages-container {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    height: 100vh;
+  }
+  
+  .chat-main {
+    border-radius: 0;
+    margin: 0;
+    flex: 1;
+    min-height: 0;
+    order: 2;
+  }
+  
+  .messages-container {
+    padding: 1rem;
+    flex: 1;
+    min-height: 0;
   }
   
   .shape {
@@ -171,13 +193,37 @@
 }
 
 @media (max-width: 640px) {
+  .chat-layout {
+    gap: 0;
+    padding: 0;
+    height: 100vh;
+  }
+  
   .chat-main {
-    border-radius: 16px;
-    margin: 0.25rem;
+    border-radius: 0;
+    margin: 0;
+    flex: 1;
   }
   
   .messages-container {
-    padding: 1rem;
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-layout {
+    padding: 0;
+    gap: 0;
+    height: 100vh;
+  }
+  
+  .chat-main {
+    border-radius: 0;
+    flex: 1;
+  }
+  
+  .messages-container {
+    padding: 0.6rem;
   }
 }
 </style>

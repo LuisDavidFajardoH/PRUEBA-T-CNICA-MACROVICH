@@ -131,35 +131,65 @@ const handleSubmit = () => {
 
 @media (max-width: 768px) {
   .input-container {
-    padding: 1rem 1.5rem;
+    padding: 0.6rem 1rem;
+  }
+  
+  .message-form {
+    max-width: 100%;
+    gap: 0.4rem;
   }
   
   .message-input {
-    padding: 0.9rem 1.1rem;
-    font-size: 0.9rem;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
   }
   
   .send-btn {
-    padding: 0.9rem 1.1rem;
-    min-width: 48px;
-    height: 48px;
+    padding: 0.5rem;
+    min-width: 36px;
+    height: 36px;
+    border-radius: 8px;
   }
 }
 
 @media (max-width: 640px) {
   .input-container {
-    padding: 1rem;
+    padding: 0.5rem 0.8rem;
+  }
+  
+  .message-form {
+    gap: 0.3rem;
   }
   
   .message-input {
-    padding: 0.8rem 1rem;
-    border-radius: 12px;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
   }
   
   .send-btn {
-    border-radius: 12px;
-    min-width: 44px;
-    height: 44px;
+    border-radius: 6px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-container {
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .message-input {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  .send-btn {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 4px;
   }
 }
 </style>

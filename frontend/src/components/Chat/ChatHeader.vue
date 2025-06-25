@@ -95,34 +95,65 @@ defineProps<{
 
 @media (max-width: 768px) {
   .chat-header {
-    padding: 1rem 1.5rem;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
   }
   
   .header-info h2 {
-    font-size: 1.2rem;
+    font-size: 0.85rem;
   }
   
   .header-info p {
-    font-size: 0.8rem;
+    font-size: 0.65rem;
   }
   
   .typing-indicator {
-    align-self: flex-end;
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 8px;
   }
 }
 
 @media (max-width: 640px) {
   .chat-header {
-    padding: 1rem;
+    padding: 0.5rem 0.8rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
   }
   
   .header-info h2 {
-    font-size: 1.1rem;
+    font-size: 0.8rem;
+  }
+  
+  .header-info p {
+    font-size: 0.6rem;
+  }
+  
+  .typing-indicator {
+    font-size: 0.55rem;
+    padding: 0.15rem 0.3rem;
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-header {
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .header-info h2 {
+    font-size: 0.75rem;
+  }
+  
+  .header-info p {
+    font-size: 0.55rem;
+  }
+  
+  .typing-indicator {
+    font-size: 0.5rem;
   }
 }
 </style>

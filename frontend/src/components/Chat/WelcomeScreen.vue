@@ -152,29 +152,34 @@ defineEmits<{
 
 @media (max-width: 768px) {
   .welcome-screen {
-    padding: 1.5rem;
+    padding: 1.2rem;
+    max-width: 100%;
   }
   
   .welcome-avatar {
-    width: 4rem;
-    height: 4rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: 1rem;
   }
   
   .welcome-avatar i {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
   
   .welcome-screen h3 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+    margin-bottom: 0.6rem;
   }
   
   .welcome-screen p {
-    font-size: 1rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.2rem;
+    max-width: 100%;
   }
   
   .suggestion-cards {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.8rem;
   }
 }
 
@@ -184,20 +189,95 @@ defineEmits<{
   }
   
   .welcome-avatar {
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.8rem;
   }
   
   .welcome-avatar i {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
+  }
+  
+  .welcome-avatar::before {
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  @keyframes ripple {
+    0% {
+      width: 3rem;
+      height: 3rem;
+      opacity: 0.6;
+    }
+    100% {
+      width: 4.5rem;
+      height: 4.5rem;
+      opacity: 0;
+    }
   }
   
   .welcome-screen h3 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
   }
   
   .welcome-screen p {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  }
+  
+  .suggestion-cards {
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-screen {
+    padding: 0.8rem;
+  }
+  
+  .welcome-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .welcome-avatar i {
+    font-size: 1rem;
+  }
+  
+  .welcome-avatar::before {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  @keyframes ripple {
+    0% {
+      width: 2.5rem;
+      height: 2.5rem;
+      opacity: 0.6;
+    }
+    100% {
+      width: 4rem;
+      height: 4rem;
+      opacity: 0;
+    }
+  }
+  
+  .welcome-screen h3 {
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .welcome-screen p {
+    font-size: 0.75rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .suggestion-cards {
+    gap: 0.5rem;
+    grid-template-columns: 1fr;
   }
 }
 </style>

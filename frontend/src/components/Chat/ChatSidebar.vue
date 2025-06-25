@@ -308,31 +308,211 @@ defineEmits<{
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
+@media (max-width: 1024px) {
+  .chat-sidebar {
+    width: 240px;
+  }
+}
+
 @media (max-width: 768px) {
   .chat-sidebar {
-    width: 260px;
-    margin: 0.5rem;
-    border-radius: 20px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    height: auto;
+    max-height: 25vh;
+    order: 1;
+    flex-shrink: 0;
   }
   
   .sidebar-header {
-    padding: 1rem;
+    padding: 0.6rem 1rem;
+  }
+  
+  .app-info h3 {
+    font-size: 0.85rem;
+  }
+  
+  .app-info span {
+    font-size: 0.65rem;
   }
   
   .conversations-container {
-    padding: 0.75rem;
+    padding: 0.5rem 1rem;
+    max-height: 120px;
   }
   
   .sidebar-footer {
-    padding: 0.75rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .user-name {
+    font-size: 0.7rem;
+  }
+  
+  .user-email {
+    font-size: 0.65rem;
   }
 }
 
 @media (max-width: 640px) {
   .chat-sidebar {
-    width: 280px;
-    margin: 0.25rem;
-    border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 20vh;
+    background: rgba(255, 255, 255, 0.98);
+  }
+  
+  .sidebar-header {
+    padding: 0.5rem 0.8rem;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+  
+  .app-branding {
+    gap: 0.4rem;
+    flex: 1;
+  }
+  
+  .app-branding i {
+    font-size: 1.1rem;
+  }
+  
+  .app-info h3 {
+    font-size: 0.8rem;
+  }
+  
+  .app-info span {
+    font-size: 0.6rem;
+  }
+  
+  .new-chat-btn {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+  
+  .conversations-container {
+    padding: 0.4rem 0.8rem;
+    max-height: 80px;
+  }
+  
+  .conversations-list {
+    gap: 0.2rem;
+  }
+  
+  .empty-state {
+    padding: 0.8rem;
+  }
+  
+  .empty-state i {
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .empty-state p {
+    font-size: 0.75rem;
+    margin: 0.2rem 0;
+  }
+  
+  .empty-state small {
+    font-size: 0.65rem;
+  }
+  
+  .sidebar-footer {
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .user-info {
+    padding: 0.3rem;
+    gap: 0.4rem;
+  }
+  
+  .user-avatar {
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 0.6rem;
+  }
+  
+  .user-name {
+    font-size: 0.65rem;
+  }
+  
+  .user-email {
+    font-size: 0.55rem;
+  }
+  
+  .logout-btn {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-sidebar {
+    max-height: 15vh;
+    border-radius: 0;
+  }
+  
+  .sidebar-header {
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .app-info h3 {
+    font-size: 0.75rem;
+  }
+  
+  .app-info span {
+    display: none;
+  }
+  
+  .new-chat-btn {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .conversations-container {
+    max-height: 60px;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .sidebar-footer {
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .user-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    text-align: left;
+    padding: 0.2rem;
+  }
+  
+  .user-details {
+    text-align: left;
+  }
+  
+  .user-avatar {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.55rem;
+  }
+  
+  .user-name {
+    font-size: 0.6rem;
+  }
+  
+  .user-email {
+    font-size: 0.5rem;
+  }
+  
+  .logout-btn {
+    align-self: center;
+    width: 20px;
+    height: 20px;
   }
 }
 </style>

@@ -167,20 +167,71 @@ const handleDelete = () => {
 
 @media (max-width: 768px) {
   .conversation-item {
-    padding: 0.9rem;
+    padding: 0.5rem;
+    margin-bottom: 0.2rem;
   }
   
   .conversation-content h4 {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
   }
   
   .conversation-content span {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
   }
   
   .delete-btn {
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .conversation-item {
+    padding: 0.4rem;
+    margin-bottom: 0.15rem;
+    border-radius: 6px;
+  }
+  
+  .conversation-content {
+    gap: 0.4rem;
+  }
+  
+  .conversation-content h4 {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+  
+  .conversation-content span {
+    font-size: 0.55rem;
+  }
+  
+  .delete-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .conversation-item {
+    padding: 0.3rem;
+    border-radius: 4px;
+    margin-bottom: 0.1rem;
+  }
+  
+  .conversation-content h4 {
+    font-size: 0.65rem;
+  }
+  
+  .conversation-content span {
+    font-size: 0.5rem;
+  }
+  
+  .delete-btn {
+    width: 16px;
+    height: 16px;
   }
 }
 </style>
